@@ -6,6 +6,7 @@ import com.matsinger.barofishserver.domain.notification.dto.NotificationMessageT
 import com.matsinger.barofishserver.domain.notification.repository.NotificationRepository;
 import com.matsinger.barofishserver.utils.fcm.FcmRequestDto;
 import com.matsinger.barofishserver.utils.fcm.FcmService;
+import com.matsinger.barofishserver.utils.fcm.FcmServiceProd;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

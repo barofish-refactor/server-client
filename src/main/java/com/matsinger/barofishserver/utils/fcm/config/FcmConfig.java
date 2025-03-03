@@ -1,4 +1,4 @@
-package com.matsinger.barofishserver.utils.fcm;
+package com.matsinger.barofishserver.utils.fcm.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -17,13 +18,14 @@ import java.io.InputStream;
 import java.util.List;
 
 @Configuration
+@Profile("!local")
 public class FcmConfig {
     @Value("${fcm.key.path}")
     private String keyFilePath;
 
     @Bean
     @PostConstruct
-    FirebaseMessaging firebaseMessaging() throws IOException {
+    public FirebaseMessaging firebaseMessaging() throws IOException {
 
         FirebaseApp firebaseApp = null;
 

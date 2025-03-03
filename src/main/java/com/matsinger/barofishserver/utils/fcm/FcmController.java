@@ -28,7 +28,7 @@ import java.util.Set;
 public class FcmController {
     private final JwtService jwt;
     private final Common utils;
-    private final FcmService fcmService;
+    private final FcmServiceProd fcmService;
     private final UserRepository userRepository;
     private final NotificationCommandService notificationCommandService;
 
