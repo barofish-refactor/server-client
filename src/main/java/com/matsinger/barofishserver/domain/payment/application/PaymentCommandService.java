@@ -4,14 +4,11 @@ import com.matsinger.barofishserver.domain.order.domain.OrderPaymentWay;
 import com.matsinger.barofishserver.domain.order.domain.Orders;
 import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
 import com.matsinger.barofishserver.domain.payment.domain.Payments;
+import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
 import com.matsinger.barofishserver.domain.payment.portone.application.PortOneCallbackService;
 import com.matsinger.barofishserver.domain.payment.repository.PaymentRepository;
-import com.matsinger.barofishserver.global.exception.BusinessException;
-import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
-import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentCommandService {
 
-    private final PortOneCallbackService portOneCallbackService;
     private final PaymentRepository paymentRepository;
+    private final PgService pgService;
 
     public void cancelPayment(Orders order, List<OrderProductInfo> orderProductInfos, int additionalDeliveryFee) throws IamportResponseException, IOException {
         int taxFreeAmount = 0;
@@ -48,12 +45,7 @@ public class PaymentCommandService {
             cancelData.setRefund_account(order.getBankAccount());
         }
 
-        IamportClient iamportClient = portOneCallbackService.getIamportClient();
-        IamportResponse<Payment> cancelResult = iamportClient.cancelPaymentByImpUid(cancelData);
-        if (cancelResult.getCode() != 0) {
-            System.out.println(cancelResult.getMessage());
-            throw new BusinessException("환불에 실패하였습니다.");
-        }
+        pgService.cancelPayment(cancelData);
     }
 
     public void save(Payments payments) {

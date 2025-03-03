@@ -1,6 +1,5 @@
 package com.matsinger.barofishserver.domain.payment.portone.application;
 
-import com.matsinger.barofishserver.domain.basketProduct.application.BasketCommandService;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketQueryRepository;
 import com.matsinger.barofishserver.domain.coupon.application.CouponCommandService;
 import com.matsinger.barofishserver.domain.notification.application.NotificationCommandService;
@@ -34,12 +33,8 @@ import com.matsinger.barofishserver.domain.user.application.UserCommandService;
 import com.matsinger.barofishserver.domain.userinfo.application.UserInfoQueryService;
 import com.matsinger.barofishserver.domain.userinfo.domain.UserInfo;
 import com.matsinger.barofishserver.domain.userinfo.repository.UserInfoRepository;
-import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.sms.SmsService;
-import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.request.CancelData;
-import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -64,21 +59,19 @@ public class PortOneCommandService {
     private final NotificationCommandService notificationCommandService;
     private final OptionItemQueryService optionItemQueryService;
     private final OptionItemCommandService optionItemCommandService;
-    private final PortOneCallbackService portOneCallbackService;
     private final UserInfoQueryService userInfoQueryService;
     private final UserCommandService userCommandService;
     private final CouponCommandService couponCommandService;
-    private final BasketCommandService basketCommandService;
     private final OrderProductInfoCommandService orderProductInfoCommandService;
     private final PaymentCommandService paymentCommandService;
     private final OrderQueryService orderQueryService;
     private final PaymentRepository paymentRepository;
     private final OrderProductInfoQueryService orderProductInfoQueryService;
     private final BasketQueryRepository basketQueryRepository;
-    private final PortOneCallbackService callbackService;
     private final OrderProductInfoRepository orderProductInfoRepository;
     private final UserInfoRepository userInfoRepository;
     private final OptionItemRepository optionItemRepository;
+    private final PgService pgService;
 
     @Transactional
     public void processWhenStatusReady(PortOneBodyData request) {
@@ -129,7 +122,7 @@ public class PortOneCommandService {
                 sendNotification(order, cannotDeliveryProducts.get(0), true);
 
                 CancelData cancelData = createAllCancelData(orderProductInfos, order);
-                requestRefund(cancelData);
+                pgService.cancelPayment(cancelData);
                 orderProductInfos.stream()
                         .filter(v -> !v.getState().equals(OrderProductState.DELIVERY_DIFFICULT))
                         .forEach(v -> v.setState(OrderProductState.CANCELED));
@@ -192,28 +185,12 @@ public class PortOneCommandService {
                 .mapToInt(v -> v.getTaxFreeAmount())
                 .sum();
         cancelData.setTax_free(BigDecimal.valueOf(taxFreePrice));
-        sendPortOneCancelData(cancelData);
+        pgService.cancelPayment(cancelData);
 
         orderRepository.save(order);
         orderProductInfoRepository.saveAll(orderProductInfos);
         paymentRepository.save(payment);
         userInfoRepository.save(userInfo);
-    }
-
-    private void requestRefund(CancelData cancelData) {
-        try {
-            IamportClient iamportClient = portOneCallbackService.getIamportClient();
-            IamportResponse<Payment> cancelResult = iamportClient.cancelPaymentByImpUid(cancelData);
-
-            if (cancelResult.getCode() != 0) {
-                System.out.println(cancelResult.getMessage());
-                log.error("포트원 환불 실패 메시지 = {}", cancelResult.getMessage());
-                log.error("포트원 환불 실패 코드 = {}", cancelResult.getCode());
-                throw new BusinessException("환불에 실패하였습니다.");
-            }
-        } catch (Exception e) {
-            throw new BusinessException("환불에 실패하였습니다.");
-            }
     }
 
     @NotNull
@@ -304,19 +281,5 @@ public class PortOneCommandService {
         order.setState(OrderState.CANCELED);
         orderRepository.save(order);
         paymentCommandService.save(payment);
-    }
-
-    public void sendPortOneCancelData(CancelData cancelData) {
-        IamportClient iamportClient = callbackService.getIamportClient();
-        try {
-            IamportResponse<Payment> cancelResult = iamportClient.cancelPaymentByImpUid(cancelData);
-            if (cancelResult.getCode() != 0) {
-                log.error("포트원 환불 실패 메시지 = {}", cancelResult.getMessage());
-                log.error("포트원 환불 실패 코드 = {}", cancelResult.getCode());
-                throw new BusinessException("환불에 실패하였습니다.");
-            }
-        } catch (Exception e) {
-            throw new BusinessException(e.getMessage());
-        }
     }
 }

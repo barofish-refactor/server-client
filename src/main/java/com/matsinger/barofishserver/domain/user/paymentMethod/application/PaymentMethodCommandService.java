@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.user.paymentMethod.application;
 
 import com.matsinger.barofishserver.domain.payment.dto.CheckValidCardRes;
-import com.matsinger.barofishserver.domain.payment.portone.application.PortOneCallbackService;
+import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
 import com.matsinger.barofishserver.domain.user.dto.AddPaymentMethodReq;
 import com.matsinger.barofishserver.domain.user.paymentMethod.domain.PaymentMethod;
 import com.matsinger.barofishserver.domain.user.paymentMethod.repository.PaymentMethodRepository;
@@ -9,17 +9,12 @@ import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.AES256;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.RegexConstructor;
-import com.siot.IamportRestClient.IamportClient;
-import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.BillingCustomerData;
-import com.siot.IamportRestClient.response.BillingCustomer;
-import com.siot.IamportRestClient.response.IamportResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -29,11 +24,10 @@ public class PaymentMethodCommandService {
 
     private final PaymentMethodRepository paymentMethodRepository;
 
-    private final PortOneCallbackService callbackService;
-
     private final Common util;
     private final AES256 aes256;
     private final RegexConstructor re;
+    private final PgService pgService;
     @Value("${iamport.credentials.mid}")
     public String mid;
     @Value("${iamport.credentials.keyin-pg}")
@@ -95,7 +89,6 @@ public class PaymentMethodCommandService {
     }
 
     private CheckValidCardRes checkValidCard(PaymentMethod paymentMethod) {
-        IamportClient iamportClient = callbackService.getIamportClient();
         String customerUid = "customer_" + paymentMethod.getUserId() + "_" + paymentMethod.getId();
         String cardNo = aes256.decrypt(paymentMethod.getCardNo());
         cardNo = cardNo.replaceAll(re.cardNo, "$1-$2-$3-$4");
@@ -108,27 +101,6 @@ public class PaymentMethodCommandService {
         billingCustomerData.setPwd2Digit(aes256.decrypt(paymentMethod.getPasswordTwoDigit()));
         billingCustomerData.setPg(keyinPg);
 
-        IamportResponse<BillingCustomer> billingCustomerRes = null;
-        try {
-            billingCustomerRes = iamportClient.postBillingCustomer(customerUid,
-                    billingCustomerData);
-        } catch (IOException e) {
-            throw new BusinessException("결제 요청에 실패했습니다.");
-        } catch (IamportResponseException e) {
-            throw new BusinessException("결제 요청에 실패했습니다.");
-        }
-
-        if (billingCustomerRes.getCode() != 0) {
-            log.error(billingCustomerRes.getCode() + ": " + billingCustomerRes.getMessage());
-            return null;
-        }
-        BillingCustomer billingCustomer = billingCustomerRes.getResponse();
-        if (billingCustomer.getCardName() == null) {
-            log.error(billingCustomerRes.getCode() + ": " + billingCustomerRes.getMessage());
-            return null;
-        }
-
-        return CheckValidCardRes.builder().cardName(billingCustomer.getCardName())
-                .customerUid(billingCustomer.getCustomerUid()).build();
+        return pgService.processPayment(customerUid, billingCustomerData);
     }
 }
