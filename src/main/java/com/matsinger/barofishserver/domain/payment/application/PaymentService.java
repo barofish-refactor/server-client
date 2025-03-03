@@ -6,7 +6,6 @@ import com.matsinger.barofishserver.domain.order.dto.VBankRefundInfo;
 import com.matsinger.barofishserver.domain.payment.dto.IamPortCertificationRes;
 import com.matsinger.barofishserver.domain.payment.dto.KeyInPaymentReq;
 import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
-import com.matsinger.barofishserver.domain.payment.portone.application.PortOneCallbackService;
 import com.matsinger.barofishserver.domain.payment.repository.PaymentRepository;
 import com.matsinger.barofishserver.utils.AES256;
 import com.matsinger.barofishserver.utils.RegexConstructor;
@@ -29,8 +28,6 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final AES256 aes256;
     private final RegexConstructor re;
-    @Value("${iamport.webhook.url}")
-    private String webhookUrl;
     private final PgService pgService;
 
     public Payments selectPayment(String id) {
@@ -119,7 +116,6 @@ public class PaymentService {
                         BigDecimal.valueOf(data.getTotal_amount()));
         againPaymentData.setTaxFree(BigDecimal.valueOf(data.getTaxFree()));
         againPaymentData.setName(data.getOrder_name());
-        againPaymentData.setNoticeUrl(webhookUrl);
 
         return pgService.againPayment(againPaymentData);
     }

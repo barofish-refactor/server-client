@@ -30,6 +30,9 @@ public class PortOneCallbackService implements PgService {
     @Value("${iamport.credentials.secretKey}")
     private String secretKey;
 
+    @Value("${iamport.webhook.url}")
+    private String webhookUrl;
+
     private IamportClient iamportClient;
 
     @PostConstruct
@@ -91,6 +94,7 @@ public class PortOneCallbackService implements PgService {
 
     @Override
     public Boolean againPayment(AgainPaymentData againPaymentData) {
+        againPaymentData.setNoticeUrl(webhookUrl);
         IamportResponse<Payment> response = Stream.of(againPaymentData)
                 .map(data -> {
                     try {
