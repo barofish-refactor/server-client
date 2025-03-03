@@ -33,9 +33,11 @@ dependencies {
     implementation "org.springframework.security:spring-security-crypto:6.0.2"
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.10.0'
 
+    // db
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    runtimeOnly 'mysql:mysql-connector-java'
     testImplementation 'org.testng:testng:7.1.0'
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
@@ -57,26 +59,6 @@ dependencies {
     implementation 'org.json:json:20230227'
     implementation 'org.apache.poi:poi:5.2.2'
     implementation 'org.apache.poi:poi-ooxml:5.2.2'
-
-    // 모니터닝을 위한 디펜던시 시작
-    implementation 'org.springframework.boot:spring-boot-starter-actuator' // 엑츄에이터
-    implementation 'io.micrometer:micrometer-registry-otlp' // runtime scope?
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.1.6'
-    implementation 'io.opentelemetry:opentelemetry-api:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-sdk:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-sdk-common:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-sdk-metrics:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-sdk-trace:1.31.0'
-    implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.31.0'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-exporter-common:1.31.0' //
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp-common:1.31.0' //
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:1.31.0-alpha' //
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-semconv:1.31.0-alpha' //
-    // 모니터닝을 위한 디펜던시 끝
-
-    // api 요청을 위한 디펜던시
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 
     // ⭐ Spring boot 3.x이상에서 QueryDsl 패키지를 정의하는 방법

@@ -61,16 +61,13 @@ public class ProductQueryService {
             Integer storeId,
             Integer userId) {
 
-        String convertedKeyword = keyword.replace("\\s+", " "); // 여러개의 공백을 공백 하나로
-        String[] keywords = convertedKeyword.split(" ");
-
-        Page<ProductListDto> pagedProductDtos = productQueryRepository.getProductsWithKeyword(
+        Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
                 pageRequest,
                 sortBy,
                 categoryIds,
                 filterFieldIds,
                 curationId,
-                keywords,
+                keyword,
                 productIds,
                 storeId);
 

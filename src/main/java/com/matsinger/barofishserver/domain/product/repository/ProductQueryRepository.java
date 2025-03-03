@@ -274,19 +274,18 @@ public class ProductQueryRepository {
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
     }
 
-    public Page<ProductListDto> getProductsWithKeyword(PageRequest pageRequest,
-                                                       ProductSortBy sortBy,
-                                                       List<Integer> categoryIds,
-                                                       List<Integer> filterFieldIds,
-                                                       Integer curationId,
-                                                       String[] keywords,
-                                                       List<Integer> productIds,
-                                                       Integer storeId) {
+    public PageImpl<ProductListDto> getProducts(PageRequest pageRequest,
+                                                ProductSortBy sortBy,
+                                                List<Integer> categoryIds,
+                                                List<Integer> filterFieldIds,
+                                                Integer curationId,
+                                                String keyword,
+                                                List<Integer> productIds,
+                                                Integer storeId) {
+        Integer count = countProducts(categoryIds, filterFieldIds, curationId, keyword, productIds, storeId);
 
         OrderSpecifier[] orderSpecifiers = createProductSortSpecifier(sortBy);
-//        CaseBuilder caseBuilder = sortByProductIds(productIds);
-
-        List<ProductListDto> result = queryFactory
+        List<ProductListDto> inquiryData = queryFactory
                 .select(Projections.fields(
                         ProductListDto.class,
                         product.id.as("id"),
@@ -308,9 +307,6 @@ public class ProductQueryRepository {
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
                 .leftJoin(category).on(category.id.eq(product.category.id))
                 .where(product.state.eq(ProductState.ACTIVE),
-//                        matches(storeInfo.name, keywords)
-//                        .or(contains(product.title, keywords)),
-                        isInProductIds(productIds),
                         eqCuration(curationId),
                         isPromotionInProgress(),
                         eqStore(storeId),
@@ -320,20 +316,11 @@ public class ProductQueryRepository {
                 )
                 .groupBy(product.id)
                 .orderBy(orderSpecifiers)
-//                .offset(pageRequest.getOffset())
-//                .limit(pageRequest.getPageSize())
+                .offset(pageRequest.getOffset())
+                .limit(pageRequest.getPageSize())
                 .fetch();
 
-        Integer count = productIds == null
-                ? countProductsAtSearchEngine(
-                        categoryIds,
-                        filterFieldIds,
-                        curationId,
-                        keywords,
-                        storeId)
-                : productIds.size();
-
-        return new PageImpl<>(result, pageRequest, count);
+        return new PageImpl<>(inquiryData, pageRequest, count);
     }
 
     private BooleanExpression matches(StringPath storeName, String[] keywords) {
