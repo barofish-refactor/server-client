@@ -12,7 +12,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class FcmService {
-    // private final FirebaseMessaging firebaseMessaging;
     private final FcmTokenRepository fcmTokenRepository;
     private final FcmConfig fcmConfig;
 
