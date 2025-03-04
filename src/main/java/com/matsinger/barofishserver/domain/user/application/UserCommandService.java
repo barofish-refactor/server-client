@@ -22,10 +22,10 @@ import com.matsinger.barofishserver.domain.notification.application.Notification
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessage;
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessageType;
 import com.matsinger.barofishserver.domain.notification.repository.NotificationRepository;
-import com.matsinger.barofishserver.domain.order.domain.Orders;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.repository.OrderProductInfoRepository;
-import com.matsinger.barofishserver.domain.order.repository.OrderDeliverPlaceRepository;
-import com.matsinger.barofishserver.domain.order.repository.OrderRepository;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
+import com.matsinger.barofishserver.order.domain.repository.OrderDeliverPlaceRepository;
+import com.matsinger.barofishserver.order.domain.repository.OrderRepository;
 import com.matsinger.barofishserver.domain.payment.domain.Payments;
 import com.matsinger.barofishserver.domain.payment.repository.PaymentRepository;
 import com.matsinger.barofishserver.domain.report.repository.ReportRepository;

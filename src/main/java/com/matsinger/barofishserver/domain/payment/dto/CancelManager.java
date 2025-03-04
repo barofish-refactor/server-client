@@ -1,8 +1,8 @@
 package com.matsinger.barofishserver.domain.payment.dto;
 
-import com.matsinger.barofishserver.domain.order.domain.Orders;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductState;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.OrderProductState;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

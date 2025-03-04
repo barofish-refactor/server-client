@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.product.difficultDeliverAddress.application;
 
-import com.matsinger.barofishserver.domain.order.domain.OrderDeliverPlace;
+import com.matsinger.barofishserver.order.domain.model.OrderDeliverPlace;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.domain.DifficultDeliverAddress;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.repository.DifficultDeliverAddressRepository;
 import lombok.RequiredArgsConstructor;
