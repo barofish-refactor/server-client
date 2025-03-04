@@ -4,7 +4,6 @@ import com.matsinger.barofishserver.domain.deliver.application.DeliverService;
 import com.matsinger.barofishserver.domain.deliver.domain.Deliver;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,8 +19,6 @@ import java.util.Optional;
 public class DeliverController {
 
     private final DeliverService deliverService;
-    @Value("${smart-parcel.apiKey}")
-    private String apiKey;
 
     @GetMapping("/company/list")
     public ResponseEntity<CustomResponse<List<Deliver.Company>>> selectDeliverCompanyList() {
@@ -35,7 +32,7 @@ public class DeliverController {
     public ResponseEntity<CustomResponse<List<Deliver.Company>>> selectRecommendDeliverCompanyList(@RequestParam("invoice") String invoice) {
         CustomResponse<List<Deliver.Company>> res = new CustomResponse<>();
 
-        res.setData(Optional.ofNullable(deliverService.selectRecommendDeliverCompanyList(invoice)));
+        res.setData(Optional.ofNullable(deliverService.getRecommendDeliverCompanyList(invoice)));
         return ResponseEntity.ok(res);
     }
 
@@ -44,7 +41,7 @@ public class DeliverController {
                                                                                    @RequestParam("code") String code) {
         CustomResponse<Deliver.TrackingInfo> res = new CustomResponse<>();
 
-        res.setData(Optional.ofNullable(deliverService.selectTrackingInfo(code, invoice)));
+        res.setData(Optional.ofNullable(deliverService.getTrackingInfo(code, invoice)));
         return ResponseEntity.ok(res);
     }
 
@@ -52,7 +49,7 @@ public class DeliverController {
     public ResponseEntity<CustomResponse<String>> selectSmartDeliverApiKey() {
         CustomResponse<String> res = new CustomResponse<>();
 
-        res.setData(Optional.ofNullable(apiKey));
+        res.setData(Optional.ofNullable(deliverService.getAccessKey()));
         return ResponseEntity.ok(res);
     }
 }
