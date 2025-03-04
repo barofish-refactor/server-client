@@ -34,11 +34,8 @@ public class UserAuthCommandService {
 
 
     private final UserException userValidator;
-
-    private final JwtProvider jwtProvider;
     private final Common util;
     private final RegexConstructor re;
-    private final SmsService smsService;
 
     public UserAuth createUserAuth(SnsJoinReq request, User user) {
         String loginId = request.getLoginId();

@@ -86,9 +86,13 @@ public class VerificationController {
         IamPortCertificationRes certificationRes = paymentService.certificateWithImpUid(impUid);
         if (certificationRes.getCertified()) {
             res.setData(Optional.ofNullable(certificationRes.getImpUid()));
-            verificationService
-                    .addVerification(Verification.builder().target(impUid).verificationNumber("").expiredAt(
-                            null).createAt(utils.now()).build());
+            verificationService.addVerification(
+                    Verification.builder()
+                            .target(impUid)
+                            .verificationNumber("")
+                            .expiredAt(null)
+                            .createAt(utils.now()).build()
+                    );
         } else {
             res.setIsSuccess(false);
             res.setData(null);

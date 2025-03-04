@@ -787,7 +787,7 @@ public class OrderController {
         if (data.getInvoice() == null) throw new BusinessException("운송장 번호를 입력해주세요.");
         Deliver.TrackingInfo
                 trackingInfo =
-                deliverService.selectTrackingInfo(data.getDeliverCompanyCode(), data.getInvoice());
+                deliverService.getTrackingInfo(data.getDeliverCompanyCode(), data.getInvoice());
         if (trackingInfo == null) throw new BusinessException("유효하지 않은 운송장 번호입니다.");
         info.setDeliverCompanyCode(data.getDeliverCompanyCode());
         info.setInvoiceCode(data.getInvoice());
