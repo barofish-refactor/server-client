@@ -12,7 +12,6 @@ import com.matsinger.barofishserver.utils.RegexConstructor;
 import com.siot.IamportRestClient.request.BillingCustomerData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
@@ -28,10 +27,6 @@ public class PaymentMethodCommandService {
     private final AES256 aes256;
     private final RegexConstructor re;
     private final PgService pgService;
-    @Value("${iamport.credentials.mid}")
-    public String mid;
-    @Value("${iamport.credentials.keyin-pg}")
-    public String keyinPg;
 
     public PaymentMethod addPaymentMethod(AddPaymentMethodReq request, int userId) {
 
@@ -99,7 +94,6 @@ public class PaymentMethodCommandService {
         String birth = paymentMethod.getBirth();
         BillingCustomerData billingCustomerData = new BillingCustomerData(customerUid, cardNo, expiry, birth);
         billingCustomerData.setPwd2Digit(aes256.decrypt(paymentMethod.getPasswordTwoDigit()));
-        billingCustomerData.setPg(keyinPg);
 
         return pgService.processPayment(customerUid, billingCustomerData);
     }

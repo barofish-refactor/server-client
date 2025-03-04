@@ -21,7 +21,6 @@ import com.matsinger.barofishserver.domain.payment.domain.Payments;
 import com.matsinger.barofishserver.domain.payment.dto.CancelManager;
 import com.matsinger.barofishserver.domain.payment.dto.KeyInPaymentReq;
 import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
-import com.matsinger.barofishserver.domain.payment.portone.application.PortOneCallbackService;
 import com.matsinger.barofishserver.domain.payment.repository.PaymentRepository;
 import com.matsinger.barofishserver.domain.product.application.ProductQueryService;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.application.DifficultDeliverAddressQueryService;
@@ -78,7 +77,6 @@ public class OrderCommandService {
     private final OrderDeliverPlaceRepository orderDeliverPlaceRepository;
     private final OrderProductInfoQueryService orderProductInfoQueryService;
     private final CouponCommandService couponCommandService;
-    private final PortOneCallbackService callbackService;
     private final UserInfoRepository userInfoRepository;
     private final PaymentRepository paymentRepository;
     private final OptionItemRepository optionItemRepository;

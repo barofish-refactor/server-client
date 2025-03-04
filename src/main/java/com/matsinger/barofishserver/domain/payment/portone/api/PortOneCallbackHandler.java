@@ -18,13 +18,11 @@ import com.matsinger.barofishserver.domain.payment.application.PaymentService;
 import com.matsinger.barofishserver.domain.payment.domain.PaymentState;
 import com.matsinger.barofishserver.domain.payment.domain.Payments;
 import com.matsinger.barofishserver.domain.payment.dto.GetVBankAccountReq;
-import com.matsinger.barofishserver.domain.payment.portone.application.PortOneCallbackService;
 import com.matsinger.barofishserver.domain.payment.portone.dto.PortOneBodyData;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.domain.user.application.UserCommandService;
 import com.matsinger.barofishserver.domain.userinfo.domain.UserInfo;
-import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.sms.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +37,7 @@ import java.util.List;
 //@RequestMapping("/callback/iamport_pay_result")
 @RequestMapping("v1/callback/iamport_pay_result")
 public class PortOneCallbackHandler {
-
-    private final Common utils;
     private final PaymentService paymentService;
-    private final PortOneCallbackService callbackService;
     private final UserCommandService userService;
     private final OrderService orderService;
     private final ProductService productService;
