@@ -15,6 +15,7 @@ import com.matsinger.barofishserver.domain.grade.domain.Grade;
 import com.matsinger.barofishserver.domain.notification.application.NotificationCommandService;
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessage;
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessageType;
+import com.matsinger.barofishserver.order.application.OrderQueryUseCase;
 import com.matsinger.barofishserver.order.application.dto.*;
 import com.matsinger.barofishserver.order.application.service.OrderService;
 import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
@@ -90,6 +91,7 @@ public class OrderController {
     private final OptionQueryService optionQueryService;
     private final UserInfoRepository userInfoRepository;
     private final UserInfoQueryService userInfoQueryService;
+    private final OrderQueryUseCase orderQueryUseCase;
 
     @GetMapping("/point-rule")
     public ResponseEntity<CustomResponse<PointRuleRes>> selectPointRule(@RequestHeader(value = "Authorization") Optional<String> auth) {
@@ -128,24 +130,24 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomResponse<OrderDto>> selectOrder(@PathVariable("id") String id,
-                                                                @RequestHeader(value = "Authorization") Optional<String> auth) {
-        CustomResponse<OrderDto> res = new CustomResponse<>();
+    public ResponseEntity<CustomResponse<OrderDto>> selectOrder(
+        @PathVariable("id") String id,
+        @RequestHeader(value = "Authorization") Optional<String> auth) {
+    
+    TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(
+        Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER, TokenAuthType.USER), 
+        auth
+    );
 
-        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER, TokenAuthType.USER), auth);
+    OrderDto orderDto = orderQueryUseCase.getOrder(id, tokenInfo);
+    
+    CustomResponse<OrderDto> response = new CustomResponse<>();
+    response.setData(Optional.ofNullable(orderDto));
+    
+    return ResponseEntity.ok(response);
+}
 
-        Orders order = orderService.selectOrder(id);
-        if (!tokenInfo.getType().equals(TokenAuthType.ADMIN)) {
-            if (tokenInfo.getType().equals(TokenAuthType.USER) &&
-                    tokenInfo.getId() != order.getUserId())
-                throw new JwtBusinessException(ErrorCode.NOT_ALLOWED);
-        }
-        UserInfo userInfo = userService.selectUserInfo(order.getUserId());
-        res.setData(Optional.ofNullable(orderService.convert2Dto(order,
-                tokenInfo.getType().equals(TokenAuthType.PARTNER) ? tokenInfo.getId() : null,
-                null)));
-        return ResponseEntity.ok(res);
-    }
+
 
     @GetMapping("/management")
     public ResponseEntity<CustomResponse<Page<OrderDto>>> selectOrderListManage(@RequestHeader(value = "Authorization") Optional<String> auth,
