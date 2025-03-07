@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.global.exception.ErrorCode;
 import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.order.domain.model.Orders;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component

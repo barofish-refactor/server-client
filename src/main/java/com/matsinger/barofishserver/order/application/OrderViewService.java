@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class OrderQueryUseCase {
+public class OrderViewService {
     
     private final OrderProductDtoConverter orderProductDtoConverter;
     private final OrderValidator orderValidator;

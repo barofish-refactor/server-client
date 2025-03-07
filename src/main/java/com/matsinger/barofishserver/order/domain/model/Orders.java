@@ -183,4 +183,9 @@ public class Orders {
     public Integer getUsedCouponId() {
         return this.couponId;
     }
+
+    public boolean hasProductFromStore(Integer storeId) {
+        return this.getProductInfos().stream()
+                .anyMatch(product -> product.getStoreId().equals(storeId));
+    }
 }

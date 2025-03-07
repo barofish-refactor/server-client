@@ -10,17 +10,10 @@ import com.matsinger.barofishserver.domain.coupon.application.CouponQueryService
 import com.matsinger.barofishserver.domain.coupon.domain.Coupon;
 import com.matsinger.barofishserver.domain.deliver.application.DeliverService;
 import com.matsinger.barofishserver.domain.deliver.domain.Deliver;
-import com.matsinger.barofishserver.domain.grade.application.GradeQueryService;
 import com.matsinger.barofishserver.domain.grade.domain.Grade;
 import com.matsinger.barofishserver.domain.notification.application.NotificationCommandService;
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessage;
 import com.matsinger.barofishserver.domain.notification.dto.NotificationMessageType;
-import com.matsinger.barofishserver.order.application.OrderQueryUseCase;
-import com.matsinger.barofishserver.order.application.dto.*;
-import com.matsinger.barofishserver.order.application.service.OrderService;
-import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
-import com.matsinger.barofishserver.order.domain.model.OrderProductState;
-import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
 import com.matsinger.barofishserver.domain.payment.application.PaymentService;
 import com.matsinger.barofishserver.domain.payment.dto.KeyInPaymentReq;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
@@ -29,7 +22,6 @@ import com.matsinger.barofishserver.domain.product.domain.ProductState;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.option.application.OptionQueryService;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
-import com.matsinger.barofishserver.domain.product.option.repository.OptionRepository;
 import com.matsinger.barofishserver.domain.product.optionitem.application.OptionItemQueryService;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.domain.siteInfo.application.SiteInfoQueryService;
@@ -49,7 +41,11 @@ import com.matsinger.barofishserver.jwt.JwtService;
 import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.jwt.exception.JwtBusinessException;
+import com.matsinger.barofishserver.order.application.OrderViewService;
+import com.matsinger.barofishserver.order.application.dto.*;
+import com.matsinger.barofishserver.order.application.service.OrderService;
 import com.matsinger.barofishserver.order.domain.model.*;
+import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import jakarta.persistence.criteria.Join;
@@ -91,7 +87,7 @@ public class OrderController {
     private final OptionQueryService optionQueryService;
     private final UserInfoRepository userInfoRepository;
     private final UserInfoQueryService userInfoQueryService;
-    private final OrderQueryUseCase orderQueryUseCase;
+    private final OrderViewService orderViewService;
 
     @GetMapping("/point-rule")
     public ResponseEntity<CustomResponse<PointRuleRes>> selectPointRule(@RequestHeader(value = "Authorization") Optional<String> auth) {
@@ -131,23 +127,21 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomResponse<OrderDto>> selectOrder(
-        @PathVariable("id") String id,
-        @RequestHeader(value = "Authorization") Optional<String> auth) {
-    
-    TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(
-        Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER, TokenAuthType.USER), 
-        auth
-    );
+            @PathVariable("id") String id,
+            @RequestHeader(value = "Authorization") Optional<String> auth) {
 
-    OrderDto orderDto = orderQueryUseCase.getOrder(id, tokenInfo);
-    
-    CustomResponse<OrderDto> response = new CustomResponse<>();
-    response.setData(Optional.ofNullable(orderDto));
-    
-    return ResponseEntity.ok(response);
-}
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(
+                Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER, TokenAuthType.USER),
+                auth
+        );
 
+        OrderDto orderDto = orderViewService.getOrder(id, tokenInfo);
 
+        CustomResponse<OrderDto> response = new CustomResponse<>();
+        response.setData(Optional.ofNullable(orderDto));
+
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/management")
     public ResponseEntity<CustomResponse<Page<OrderDto>>> selectOrderListManage(@RequestHeader(value = "Authorization") Optional<String> auth,
@@ -167,7 +161,7 @@ public class OrderController {
                                                                                 @RequestParam(value = "orderAtE", required = false) Timestamp orderAtE) {
         CustomResponse<Page<OrderDto>> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
         Specification<Orders> spec = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -200,7 +194,7 @@ public class OrderController {
 //                                    Arrays.stream(state.split(",")).map(OrderProductState::valueOf).toList())
 //                    );
                 predicates.add(
-                    root.get("productInfos").get("state").in(Arrays.stream(state.split(",")).map(OrderProductState::valueOf).toList())
+                        root.get("productInfos").get("state").in(Arrays.stream(state.split(",")).map(OrderProductState::valueOf).toList())
                 );
 
                 if (tokenInfo.getType().equals(TokenAuthType.PARTNER)) {
@@ -240,7 +234,7 @@ public class OrderController {
                                                                                     @RequestParam(value = "take", required = false, defaultValue = "10") Integer take) {
         CustomResponse<List<OrderDto>> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN), auth);
 
         PageRequest pageRequest = PageRequest.of(page, take, Sort.by(Sort.Direction.DESC, "orderedAt"));
         List<OrderDto>
@@ -258,7 +252,7 @@ public class OrderController {
                                                                           @RequestParam(value = "take", required = false, defaultValue = "10") Integer take) {
         CustomResponse<List<OrderDto>> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
 
         PageRequest pageRequest = PageRequest.of(page, take, Sort.by(Sort.Direction.DESC, "orderedAt"));
         List<OrderDto>
@@ -275,7 +269,7 @@ public class OrderController {
                                                                    @RequestParam(value = "state", required = false) String state) {
         CustomResponse<Integer> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
 
         Integer count = orderService.countOrderList(tokenInfo.getId(), state);
 
@@ -287,7 +281,7 @@ public class OrderController {
     public ResponseEntity<CustomResponse<List<OrderDto>>> selectCanceledOrderList(@RequestHeader(value = "Authorization") Optional<String> auth) {
         CustomResponse<List<OrderDto>> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
 
         List<OrderDto>
                 orders =
@@ -506,7 +500,7 @@ public class OrderController {
                                                                   @PathVariable("orderId") String orderId) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN), auth);
 
         Integer adminId = null;
         if (tokenInfo.getType().equals(TokenAuthType.ADMIN)) adminId = tokenInfo.getId();
@@ -646,7 +640,7 @@ public class OrderController {
                                                                         @PathVariable("orderProductInfoId") Integer orderProductInfoId) throws Exception {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
         Integer adminId = null;
         if (tokenInfo.getType().equals(TokenAuthType.ADMIN)) adminId = null;
@@ -677,7 +671,7 @@ public class OrderController {
                                                                      @PathVariable("orderProductInfoId") Integer orderProductInfoId) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
 
         Integer adminId = null;
@@ -708,7 +702,7 @@ public class OrderController {
                                                                       @PathVariable("orderProductInfoId") Integer orderProductInfoId) throws Exception {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
 
         Integer adminId = null;
@@ -736,7 +730,7 @@ public class OrderController {
                                                                 @PathVariable("orderProductInfoId") Integer orderProductInfoId) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
         Integer adminId = null;
         if (tokenInfo.getType().equals(TokenAuthType.ADMIN)) adminId = tokenInfo.getId();
@@ -779,7 +773,7 @@ public class OrderController {
                                                                        @RequestPart(value = "data") ProcessDeliverStartReq data) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
         Integer adminId = null;
         if (tokenInfo.getType().equals(TokenAuthType.ADMIN)) adminId = tokenInfo.getId();
@@ -829,7 +823,7 @@ public class OrderController {
                                                                         @RequestPart(value = "data") RequestChangeProduct data) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
 
         OrderProductInfo info = orderService.selectOrderProductInfo(orderProductInfoId);
         Orders order = orderService.selectOrder(info.getOrderId());
@@ -850,7 +844,7 @@ public class OrderController {
                                                                        @PathVariable("orderProductInfoId") Integer orderProductInfoId) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
 
 
         Integer adminId = null;
@@ -889,7 +883,7 @@ public class OrderController {
                                                                         @PathVariable("orderProductInfoId") Integer orderProductInfoId) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
         Integer userId = tokenInfo.getId();
 
         Integer adminId = null;
@@ -934,7 +928,7 @@ public class OrderController {
         OrderProductInfo info = orderService.selectOrderProductInfo(orderProductInfoId);
         OptionItem requestOptionItem = optionItemQueryService.findById(info.getOptionItemId());
         Option requestOption = optionQueryService.findById(requestOptionItem.getOptionId());
-        if (requestOption.isNeeded() == false) {
+        if (!requestOption.isNeeded()) {
             throw new BusinessException("필수옵션인 경우에만 구매 확정이 가능합니다.");
         }
         if (!info.getState().equals(OrderProductState.DELIVERY_DONE)) {
@@ -952,12 +946,9 @@ public class OrderController {
         List<OrderProductInfo> notNeededOption = orderProductInfos.stream().filter(v -> {
             OptionItem optionItem = optionItemQueryService.findById(v.getOptionItemId());
             Option option = optionQueryService.findById((optionItem.getOptionId()));
-            if (!option.isNeeded() &&
+            return !option.isNeeded() &&
                     v.getState() != OrderProductState.FINAL_CONFIRM &&
-                    v.getProductId() == product.getId()) {
-                return true;
-            }
-            return false;
+                    v.getProductId() == product.getId();
         }).toList();
 
         ArrayList<OrderProductInfo> productTobePurchaseConfirmation = new ArrayList<>();
@@ -989,7 +980,7 @@ public class OrderController {
                                                                              @RequestPart(value = "data") RequestCancelReq data) {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.USER), auth);
 
         OrderProductInfo info = orderService.selectOrderProductInfo(orderProductInfoId);
         Orders order = orderService.selectOrder(info.getOrderId());
@@ -1086,7 +1077,7 @@ public class OrderController {
                                                                           @PathVariable("orderProductInfoId") Integer orderProductInfoId) throws Exception {
         CustomResponse<Boolean> res = new CustomResponse<>();
 
-                TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ADMIN, TokenAuthType.PARTNER), auth);
         Integer userId = tokenInfo.getId();
 
         Integer adminId = null;
