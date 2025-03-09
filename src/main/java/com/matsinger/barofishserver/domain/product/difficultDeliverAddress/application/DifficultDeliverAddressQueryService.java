@@ -1,6 +1,5 @@
 package com.matsinger.barofishserver.domain.product.difficultDeliverAddress.application;
 
-import com.matsinger.barofishserver.order.domain.model.OrderDeliverPlace;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.domain.DifficultDeliverAddress;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.repository.DifficultDeliverAddressRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -25,27 +25,8 @@ public class DifficultDeliverAddressQueryService {
         return difficultDeliverAddresses.stream().map(v -> v.getBcode()).toList();
     }
 
-    public boolean canDeliver(Integer productId,
-                              OrderDeliverPlace orderDeliverPlace) {
-        List<String> difficultDeliveryBcodes = getDifficultDeliveryBcodes(productId);
-
-        String orderDeliverPlaceBcode = orderDeliverPlace.getBcode().substring(0, 5);
-
-        for (String difficultDeliveryBcode : difficultDeliveryBcodes) {
-            if (difficultDeliveryBcode.length() >= 5) {
-                String subtractedBcode = difficultDeliveryBcode.substring(0, 5);
-                boolean cannotDeliver = subtractedBcode.equals(orderDeliverPlaceBcode);
-                if (cannotDeliver) {
-                    return false;
-                }
-            }
-        }
-        return true;
-
-//        return difficultDeliveryBcodes.stream()
-//                .noneMatch(
-//                        v -> v.length() >= 5 &&
-//                                v.substring(0, 5).equals(orderDeliverPlaceBcode)
-//                );
+    public List<Integer> findDifficultDeliveryProductIds(Set<Integer> productIds, String bcode) {
+        String orderBcode = bcode.substring(0, 5);
+        return difficultDeliverAddressRepository.findProductIdsByProductIdInAndBcodeStartingWith(productIds, orderBcode);
     }
 }

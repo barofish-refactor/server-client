@@ -188,4 +188,11 @@ public class Orders {
         return this.getProductInfos().stream()
                 .anyMatch(product -> product.getStoreId().equals(storeId));
     }
+
+    public int getTotalTaxFreePrice() {
+        return this.getProductInfos().stream()
+                .filter(product -> product.getIsTaxFree())
+                .mapToInt(OrderProductInfo::getTotalProductPrice)
+                .sum();
+    }
 }
