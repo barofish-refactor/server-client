@@ -10,6 +10,7 @@ import com.matsinger.barofishserver.global.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -133,6 +134,9 @@ public class Product implements ConditionalObject {
 
     @Column(name = "recommended_cooking_way", length = 10)
     private String recommendedCookingWay;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OptionItem> optionItems = new ArrayList<>();
 
     public void setPointRate(Float pointRate) {
         this.pointRate = pointRate / 100;
@@ -337,5 +341,9 @@ public class Product implements ConditionalObject {
 
     public boolean needTaxation() {
         return this.needTaxation == true;
+    }
+
+    public List<OptionItem> getOptionItems() {
+        return optionItems;
     }
 }
