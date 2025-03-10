@@ -25,7 +25,7 @@ public class OptionItemDto {
     public static OptionItemDto from(OptionItem optionItem, Product product) {
         return OptionItemDto.builder()
                 .id(optionItem.getId())
-                .optionId(optionItem.getOptionId())
+                .optionId(optionItem.getOption().getId())
                 .name(optionItem.getName())
                 .discountPrice(optionItem.getDiscountPrice())
                 .amount(optionItem.getAmount())

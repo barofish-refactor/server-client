@@ -438,13 +438,13 @@ public class ProductController {
             for (OptionAddReq od : data.getOptions()) {
                 Option
                         option =
-                        Option.builder().productId(result.getId()).state(OptionState.ACTIVE).isNeeded(od.getIsNeeded()).description(
+                        Option.builder().product(result).state(OptionState.ACTIVE).isNeeded(od.getIsNeeded()).description(
                                 "").build();
                 option = productService.addOption(option);
                 for (OptionItemAddReq itemData : od.getItems()) {
                     OptionItem
                             item =
-                            OptionItem.builder().optionId(option.getId()).name(itemData.getName()).discountPrice(
+                            OptionItem.builder().option(option).name(itemData.getName()).discountPrice(
                                     itemData.getDiscountPrice()).amount(itemData.getAmount()).purchasePrice(itemData.getPurchasePrice()).originPrice(
                                     itemData.getOriginPrice()).state(OptionItemState.ACTIVE).deliverFee(itemData.getDeliveryFee()).deliverBoxPerAmount(
                                     itemData.getDeliverBoxPerAmount()).maxAvailableAmount(itemData.getMaxAvailableAmount()).build();
@@ -676,12 +676,12 @@ public class ProductController {
                 if (optionData.getType().equals(Common.CudType.CREATE)) {
                     Option
                             option =
-                            productService.addOption(Option.builder().productId(product.getId()).description("").state(
+                            productService.addOption(Option.builder().product(product).description("").state(
                                     OptionState.ACTIVE).isNeeded(optionData.getData().getIsNeeded()).build());
                     for (OptionItemUpdateReq itemData : optionData.getData().getItems().stream().map(Common.CudInput::getData).toList()) {
                         OptionItem
                                 optionItem =
-                                productService.addOptionItem(OptionItem.builder().optionId(option.getId()).name(
+                                productService.addOptionItem(OptionItem.builder().option(option).name(
                                         itemData.getName()).discountPrice(itemData.getDiscountPrice()).amount(
                                         itemData.getAmount()).purchasePrice(itemData.getPurchasePrice()).originPrice(
                                         itemData.getOriginPrice()).state(OptionItemState.ACTIVE).deliverFee(itemData.getDeliveryFee()).deliverBoxPerAmount(
@@ -698,7 +698,7 @@ public class ProductController {
                         if (itemData.getType().equals(Common.CudType.CREATE)) {
                             OptionItem
                                     optionItem =
-                                    productService.addOptionItem(OptionItem.builder().optionId(option.getId()).name(
+                                    productService.addOptionItem(OptionItem.builder().option(option).name(
                                             d.getName()).discountPrice(d.getDiscountPrice()).state(OptionItemState.ACTIVE).amount(
                                             d.getAmount()).purchasePrice(d.getPurchasePrice()).originPrice(d.getOriginPrice()).deliverFee(
                                             d.getDeliveryFee()).deliverBoxPerAmount(d.getDeliverBoxPerAmount()).maxAvailableAmount(
@@ -708,7 +708,7 @@ public class ProductController {
                             OptionItem oi = productService.selectOptionItem(itemData.getId());
                             OptionItem
                                     optionItem =
-                                    OptionItem.builder().id(itemData.getId()).optionId(option.getId()).name(itemData.getData().getName() !=
+                                    OptionItem.builder().id(itemData.getId()).option(option).name(itemData.getData().getName() !=
                                             null ? itemData.getData().getName() : oi.getName()).discountPrice(
                                             itemData.getData().getDiscountPrice() !=
                                                     null ? itemData.getData().getDiscountPrice() : oi.getDiscountPrice()).amount(

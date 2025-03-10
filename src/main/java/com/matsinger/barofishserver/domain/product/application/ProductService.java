@@ -101,7 +101,7 @@ public class ProductService {
     public void deleteOption(Integer optionId) {
         Option option = selectOption(optionId);
         List<OptionItem> optionItems = optionItemRepository.findAllByOptionIdAndState(optionId, OptionItemState.ACTIVE);
-        basketProductOptionRepository.deleteAllByOptionIdIn(optionItems.stream().map(OptionItem::getOptionId).toList());
+        basketProductOptionRepository.deleteAllByOptionIdIn(optionItems.stream().map(oi -> oi.getOption().getId()).toList());
         optionItems.forEach(v -> {
             v.setState(OptionItemState.DELETED);
         });
@@ -562,7 +562,7 @@ public class ProductService {
 
     public OptionDto convert2OptionDto(Option option) {
         OptionDto optionDto = option.convert2Dto();
-        Product product = selectProduct(option.getProductId());
+        Product product = option.getProduct();
         List<OptionItem>
                 optionItems =
                 optionItemRepository.findAllByOptionIdAndState(option.getId(), OptionItemState.ACTIVE);

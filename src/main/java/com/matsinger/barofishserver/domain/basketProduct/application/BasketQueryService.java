@@ -161,7 +161,7 @@ public class BasketQueryService {
     private static OptionItemDto getOptionItemDto(BasketProductInfo productInfo, OptionItem optionItem, Product product) {
         OptionItemDto optionItemDto = OptionItemDto.builder()
                 .id(optionItem.getId())
-                .optionId(optionItem.getOptionId())
+                .optionId(optionItem.getOption().getId())
                 .name(optionItem.getName())
                 .discountPrice(optionItem.getDiscountPrice())
                 .amount(productInfo.getAmount())

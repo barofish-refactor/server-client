@@ -70,8 +70,8 @@ public class TastingNoteQueryRepository {
                 .from(product)
                 .leftJoin(tastingNote).on(product.id.eq(tastingNote.productId))
                 .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
-                .leftJoin(option).on(product.id.eq(option.productId))
-                .leftJoin(optionItem).on(optionItem.optionId.eq(option.id))
+                .leftJoin(option).on(product.id.eq(option.product.id))
+                .leftJoin(optionItem).on(optionItem.option.id.eq(option.id))
                 .where(product.id.eq(productId))
                 .fetchOne();
     }

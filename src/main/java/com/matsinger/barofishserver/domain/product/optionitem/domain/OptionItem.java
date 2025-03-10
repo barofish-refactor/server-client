@@ -1,6 +1,7 @@
 package com.matsinger.barofishserver.domain.product.optionitem.domain;
 
 import com.matsinger.barofishserver.domain.product.domain.Product;
+import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.optionitem.dto.OptionItemDto;
 import com.matsinger.barofishserver.domain.product.domain.OptionItemState;
 import com.matsinger.barofishserver.global.exception.BusinessException;
@@ -24,12 +25,14 @@ public class OptionItem {
     @Column(name = "id", nullable = false)
     private int id;
 
-    @Basic
-    @Column(name = "option_id", nullable = false)
-    private int optionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "option_id", nullable = false)
+    private Option option;
+
     @Basic
     @Column(name = "name", nullable = false, length = 100)
     private String name;
+
     @Basic
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -62,10 +65,6 @@ public class OptionItem {
     @Column(name = "max_available_amount", nullable = true)
     private Integer maxAvailableAmount;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
-    private Product product;
-
     public void validateQuantity(int quantity, String productName) {
         if (quantity < 1) {
             throw new BusinessException("수량은 0보다 커야 합니다.");
@@ -97,7 +96,7 @@ public class OptionItem {
     public OptionItemDto convert2Dto(Product product) {
         return OptionItemDto.builder()
                 .id(this.id)
-                .optionId(this.getOptionId())
+                .optionId(this.getOption().getId())
                 .name(this.name)
                 .discountPrice(this.discountPrice)
                 .amount(this.amount)
@@ -118,7 +117,6 @@ public class OptionItem {
         this.id = id;
     }
 
-
     public String getName() {
         return name;
     }
@@ -127,18 +125,19 @@ public class OptionItem {
         this.name = name;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OptionItem that = (OptionItem) o;
-        return id == that.id && optionId == that.getOptionId() && Objects.equals(name, that.name);
+        return id == that.id && 
+               Objects.equals(option, that.option) && 
+               Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, getOptionId(), name);
+        return Objects.hash(id, option, name);
     }
 
     public void addQuantity(int quantity) {

@@ -1,6 +1,7 @@
 package com.matsinger.barofishserver.order.domain.service;
 
 import com.matsinger.barofishserver.domain.product.domain.Product;
+import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.order.application.dto.OrderProductReq;
@@ -56,7 +57,8 @@ public class OrderProductCreator {
     }
 
     private OptionItem findAndValidateOption(Product product, Integer optionId) {
-        return product.getOptionItems().stream()
+        return product.getOptions().stream()
+                .flatMap(option -> option.getOptionItems().stream())
                 .filter(item -> item.getId().equals(optionId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("옵션 아이템 정보를 찾을 수 없습니다."));
