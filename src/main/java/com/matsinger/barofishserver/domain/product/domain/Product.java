@@ -36,9 +36,9 @@ public class Product implements ConditionalObject {
     @Column(name = "store_id", nullable = false)
     private int storeId;
 
-    @ManyToOne
-    @JoinColumn(name = "store_id", updatable = false, insertable = false)
-    private Store store;
+//    @ManyToOne
+//    @JoinColumn(name = "store_id", updatable = false, insertable = false)
+//    private Store store;
 
     // @Basic
     // @Column(name = "category_id", nullable = false)
