@@ -3,6 +3,7 @@ package com.matsinger.barofishserver.domain.product.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
+import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.store.domain.ConditionalObject;
 import com.matsinger.barofishserver.domain.store.domain.Store;
@@ -10,6 +11,7 @@ import com.matsinger.barofishserver.global.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -45,6 +47,10 @@ public class Product implements ConditionalObject {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Option> options = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private ProductState state;

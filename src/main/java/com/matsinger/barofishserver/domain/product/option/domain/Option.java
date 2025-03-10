@@ -1,10 +1,14 @@
 package com.matsinger.barofishserver.domain.product.option.domain;
 
 import com.matsinger.barofishserver.domain.product.domain.OptionState;
+import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.option.dto.OptionDto;
+import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -19,16 +23,23 @@ public class Option {
     @Id
     @Column(name = "id", nullable = false)
     private int id;
-    @Basic
-    @Column(name = "product_id", nullable = false)
-    private int productId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OptionItem> optionItems = new ArrayList<>();
+
     @Basic
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private OptionState state;
+
     @Basic
     @Column(name = "is_needed", nullable = false)
     private Boolean isNeeded;
+
     @Basic
     @Column(name = "description", nullable = false, length = 200)
     private String description;
@@ -40,7 +51,6 @@ public class Option {
     public void setId(int id) {
         this.id = id;
     }
-
 
     public Boolean getIsNeeded() {
         return isNeeded;
@@ -58,9 +68,11 @@ public class Option {
         this.description = description;
     }
 
-
     public OptionDto convert2Dto() {
-        return OptionDto.builder().id(this.getId()).isNeeded(this.getIsNeeded()).build();
+        return OptionDto.builder()
+                .id(this.getId())
+                .isNeeded(this.getIsNeeded())
+                .build();
     }
 
     @Override
@@ -69,8 +81,8 @@ public class Option {
         if (o == null || getClass() != o.getClass()) return false;
         Option that = (Option) o;
         return id == that.id &&
-//                productId == that.productId &&
-                isNeeded == that.isNeeded && Objects.equals(description, that.description);
+                isNeeded == that.isNeeded && 
+                Objects.equals(description, that.description);
     }
 
     @Override

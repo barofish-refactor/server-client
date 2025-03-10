@@ -7,8 +7,8 @@ import com.matsinger.barofishserver.domain.basketProduct.dto.AddBasketOptionReq;
 import com.matsinger.barofishserver.domain.basketProduct.dto.AddBasketReq;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketProductInfoRepository;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketProductOptionRepository;
-import com.matsinger.barofishserver.domain.order.domain.Orders;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
 import com.matsinger.barofishserver.domain.product.application.ProductQueryService;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
@@ -165,7 +165,7 @@ public class BasketCommandService {
                 if (optionItem.getOptionId() == optionItemId) {
                     isExist = true;
                     OptionItem findedOptionItem = productService.selectOptionItem(optionItemId);
-                    Option option = optionQueryService.findById(findedOptionItem.getOptionId());
+                    Option option = findedOptionItem.getOption();
 
                     info.setAmount(info.getAmount() + amount);
                     basketProductInfoRepository.save(info);
@@ -227,7 +227,7 @@ public class BasketCommandService {
             BasketProductInfos basketProductInfos = new BasketProductInfos(exisingBasketProductInfos);
 
             OptionItem optionItem = optionItemQueryService.findById(optionReq.getOptionId());
-            Option option = optionQueryService.findById(optionItem.getOptionId());
+            Option option = optionItem.getOption();
             // 장바구니에 같은 상품이 있으면
             if (!basketProductInfos.isEmpty()) {
                 // 같은 옵션 아이템에 수량 추가

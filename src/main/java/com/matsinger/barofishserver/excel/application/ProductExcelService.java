@@ -173,7 +173,7 @@ public class ProductExcelService {
                 } else {
                     OptionItem
                             newOptionItem =
-                            OptionItem.builder().optionId(option.getId()).name(optionNameList.get(i)).state(
+                            OptionItem.builder().option(option).name(optionNameList.get(i)).state(
                                     OptionItemState.ACTIVE).discountPrice(discountPriceList.get(i)).amount(amountList.get(
                                     i)).purchasePrice(purchasePriceList.get(i)).originPrice(originPriceList.get(i)).deliverFee(
                                     0).maxAvailableAmount(maxAvailableAmountList.get(i)).build();
@@ -194,7 +194,7 @@ public class ProductExcelService {
                             deliverBoxPerAmount).build();
             Option
                     option =
-                    Option.builder().productId(0).state(OptionState.ACTIVE).isNeeded(true).description("").build();
+                    Option.builder().state(OptionState.ACTIVE).isNeeded(true).description("").build();
             for (int i = 0; i < optionNameList.size(); i++) {
                 OptionItem
                         optionItem =
@@ -215,10 +215,10 @@ public class ProductExcelService {
     public void processProductExcelDataList(List<ProductExcelData> dataList) {
         for (ProductExcelData data : dataList) {
             Product product = productService.upsertProduct(data.product);
-            if (data.option.getProductId() == 0) data.option.setProductId(product.getId());
+            if (data.option.getProduct().getId() == 0) data.option.setProduct(product);
             Option option = productService.upsertOption(data.option);
             data.optionItems.forEach(v -> {
-                v.setOptionId(option.getId());
+                v.setOption(option);
             });
             List<OptionItem> optionItems = productService.upsertOptionItemList(data.optionItems);
             product.setRepresentOptionItemId(optionItems.get(data.representOptionNo - 1).getId());

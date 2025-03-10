@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.product.repository;
 
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductState;
+import com.matsinger.barofishserver.order.domain.model.OrderProductState;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.domain.ProductState;
@@ -19,7 +19,6 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -33,7 +32,6 @@ import java.util.Map;
 
 import static com.matsinger.barofishserver.domain.category.domain.QCategory.category;
 import static com.matsinger.barofishserver.domain.data.curation.domain.QCurationProductMap.curationProductMap;
-import static com.matsinger.barofishserver.domain.order.orderprductinfo.domain.QOrderProductInfo.orderProductInfo;
 import static com.matsinger.barofishserver.domain.product.domain.QProduct.product;
 import static com.matsinger.barofishserver.domain.product.optionitem.domain.QOptionItem.optionItem;
 import static com.matsinger.barofishserver.domain.review.domain.QReview.review;
@@ -41,6 +39,7 @@ import static com.matsinger.barofishserver.domain.searchFilter.domain.QProductSe
 import static com.matsinger.barofishserver.domain.store.domain.QStore.store;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreInfo.storeInfo;
 import static com.matsinger.barofishserver.domain.userinfo.domain.QUserInfo.userInfo;
+import static com.matsinger.barofishserver.order.domain.model.QOrderProductInfo.orderProductInfo;
 
 @Repository
 @RequiredArgsConstructor

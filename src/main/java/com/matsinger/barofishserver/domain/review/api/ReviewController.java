@@ -1,9 +1,9 @@
 package com.matsinger.barofishserver.domain.review.api;
 
-import com.matsinger.barofishserver.domain.order.application.OrderService;
-import com.matsinger.barofishserver.domain.order.domain.Orders;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.repository.OrderProductInfoRepository;
+import com.matsinger.barofishserver.order.application.service.OrderService;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.option.application.OptionQueryService;
@@ -244,7 +244,7 @@ public class ReviewController {
 
         // 필수 옵션만 리뷰를 작성할 수 있고 주문 상품당 하나만 작성 가능
         OptionItem optionItem = optionItemQueryService.findById(orderProductInfo.getOptionItemId());
-        Option option = optionQueryService.findById(optionItem.getOptionId());
+        Option option = optionItem.getOption();
         if (!option.isNeeded()) {
             throw new BusinessException("필수 옵션만 리뷰를 작성할 수 있습니다.");
         }

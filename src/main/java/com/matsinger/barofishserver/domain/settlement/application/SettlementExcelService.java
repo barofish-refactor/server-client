@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.settlement.application;
 
-import com.matsinger.barofishserver.domain.order.domain.OrderPaymentWay;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductState;
+import com.matsinger.barofishserver.order.domain.model.OrderPaymentWay;
+import com.matsinger.barofishserver.order.domain.model.OrderProductState;
 import com.matsinger.barofishserver.domain.settlement.dto.SettlementOrderDto;
 import com.matsinger.barofishserver.domain.settlement.dto.SettlementProductOptionItemDto;
 import com.matsinger.barofishserver.domain.settlement.dto.SettlementStoreDto;

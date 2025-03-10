@@ -67,7 +67,7 @@ public class BasketQueryRepository {
                         Projections.fields(
                                 OptionItemDto.class,
                                 optionItem.id.as("id3"),
-                                optionItem.optionId.as("optionId"),
+                                optionItem.option.id.as("optionId"),
                                 optionItem.name.as("name2"),
                                 optionItem.discountPrice.as("discountPrice2"),
                                 optionItem.amount.as("amount2"),

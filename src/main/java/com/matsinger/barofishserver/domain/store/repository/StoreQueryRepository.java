@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.store.repository;
 
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductState;
+import com.matsinger.barofishserver.order.domain.model.OrderProductState;
 import com.matsinger.barofishserver.domain.store.domain.StoreState;
 import com.matsinger.barofishserver.domain.store.dto.StoreExcelInquiryDto;
 import com.matsinger.barofishserver.domain.store.dto.StoreRecommendInquiryDto;
@@ -15,13 +15,13 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.matsinger.barofishserver.domain.deliver.domain.QDeliveryCompany.deliveryCompany;
-import static com.matsinger.barofishserver.domain.order.domain.QOrders.orders;
-import static com.matsinger.barofishserver.domain.order.orderprductinfo.domain.QOrderProductInfo.orderProductInfo;
 import static com.matsinger.barofishserver.domain.product.domain.QProduct.product;
 import static com.matsinger.barofishserver.domain.review.domain.QReview.review;
 import static com.matsinger.barofishserver.domain.store.domain.QStore.store;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreInfo.storeInfo;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreScrap.storeScrap;
+import static com.matsinger.barofishserver.order.domain.model.QOrderProductInfo.orderProductInfo;
+import static com.matsinger.barofishserver.order.domain.model.QOrders.orders;
 
 @Repository
 @RequiredArgsConstructor
