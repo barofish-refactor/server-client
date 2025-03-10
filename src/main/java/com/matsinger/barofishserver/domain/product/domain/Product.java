@@ -3,6 +3,7 @@ package com.matsinger.barofishserver.domain.product.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
+import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.store.domain.ConditionalObject;
 import com.matsinger.barofishserver.domain.store.domain.Store;
@@ -46,6 +47,10 @@ public class Product implements ConditionalObject {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Option> options = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private ProductState state;
@@ -134,9 +139,6 @@ public class Product implements ConditionalObject {
 
     @Column(name = "recommended_cooking_way", length = 10)
     private String recommendedCookingWay;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OptionItem> optionItems = new ArrayList<>();
 
     public void setPointRate(Float pointRate) {
         this.pointRate = pointRate / 100;
@@ -341,9 +343,5 @@ public class Product implements ConditionalObject {
 
     public boolean needTaxation() {
         return this.needTaxation == true;
-    }
-
-    public List<OptionItem> getOptionItems() {
-        return optionItems;
     }
 }

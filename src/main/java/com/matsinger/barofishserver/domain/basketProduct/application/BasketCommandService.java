@@ -165,7 +165,7 @@ public class BasketCommandService {
                 if (optionItem.getOptionId() == optionItemId) {
                     isExist = true;
                     OptionItem findedOptionItem = productService.selectOptionItem(optionItemId);
-                    Option option = optionQueryService.findById(findedOptionItem.getOptionId());
+                    Option option = findedOptionItem.getOption();
 
                     info.setAmount(info.getAmount() + amount);
                     basketProductInfoRepository.save(info);
@@ -227,7 +227,7 @@ public class BasketCommandService {
             BasketProductInfos basketProductInfos = new BasketProductInfos(exisingBasketProductInfos);
 
             OptionItem optionItem = optionItemQueryService.findById(optionReq.getOptionId());
-            Option option = optionQueryService.findById(optionItem.getOptionId());
+            Option option = optionItem.getOption();
             // 장바구니에 같은 상품이 있으면
             if (!basketProductInfos.isEmpty()) {
                 // 같은 옵션 아이템에 수량 추가

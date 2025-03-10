@@ -25,7 +25,7 @@ public class OrderProductDtoConverter {
         Product product = productService.selectProduct(orderProductInfo.getProductId());
         StoreInfo storeInfo = storeService.selectStoreInfo(product.getStoreId());
         OptionItem optionItem = productService.selectOptionItem(orderProductInfo.getOptionItemId());
-        Option option = optionQueryService.findById(optionItem.getOptionId());
+        Option option = optionItem.getOption();
         boolean isReviewWritten = reviewQueryService.checkReviewWritten(userId, product.getId(), orderProductInfo.getId());
 
         return OrderProductDto.from(

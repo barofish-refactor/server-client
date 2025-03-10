@@ -244,7 +244,7 @@ public class ReviewController {
 
         // 필수 옵션만 리뷰를 작성할 수 있고 주문 상품당 하나만 작성 가능
         OptionItem optionItem = optionItemQueryService.findById(orderProductInfo.getOptionItemId());
-        Option option = optionQueryService.findById(optionItem.getOptionId());
+        Option option = optionItem.getOption();
         if (!option.isNeeded()) {
             throw new BusinessException("필수 옵션만 리뷰를 작성할 수 있습니다.");
         }
