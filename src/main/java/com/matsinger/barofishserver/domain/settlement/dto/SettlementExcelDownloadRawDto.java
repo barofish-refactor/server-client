@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.settlement.dto;
 
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductState;
+import com.matsinger.barofishserver.order.domain.model.OrderProductState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

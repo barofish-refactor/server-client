@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.dashboard.dto;
 
 import com.matsinger.barofishserver.domain.inquiry.dto.InquiryDto;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
 import lombok.*;
 
 import java.util.List;

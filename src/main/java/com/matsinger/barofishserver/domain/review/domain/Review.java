@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.review.domain;
 
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.review.dto.ReviewDto;
 import com.matsinger.barofishserver.domain.store.domain.Store;

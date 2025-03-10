@@ -62,6 +62,9 @@ public class OptionItem {
     @Column(name = "max_available_amount", nullable = true)
     private Integer maxAvailableAmount;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     public void validateQuantity(int quantity, String productName) {
         if (quantity < 1) {
@@ -107,7 +110,7 @@ public class OptionItem {
                 .build();
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 

@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.payment.portone.application;
 
-import com.matsinger.barofishserver.domain.order.domain.BankCode;
+import com.matsinger.barofishserver.order.domain.model.BankCode;
 import com.matsinger.barofishserver.domain.payment.dto.CheckValidCardRes;
 import com.matsinger.barofishserver.domain.payment.dto.IamPortCertificationRes;
 import com.matsinger.barofishserver.domain.payment.portone.dto.PortOneAccessKeyRequest;

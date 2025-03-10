@@ -2,7 +2,7 @@ package com.matsinger.barofishserver.domain.payment.application;
 
 import com.matsinger.barofishserver.domain.payment.domain.PaymentState;
 import com.matsinger.barofishserver.domain.payment.domain.Payments;
-import com.matsinger.barofishserver.domain.order.dto.VBankRefundInfo;
+import com.matsinger.barofishserver.order.application.dto.VBankRefundInfo;
 import com.matsinger.barofishserver.domain.payment.dto.IamPortCertificationRes;
 import com.matsinger.barofishserver.domain.payment.dto.KeyInPaymentReq;
 import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
@@ -14,7 +14,6 @@ import com.siot.IamportRestClient.request.*;
 import com.siot.IamportRestClient.response.Payment;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

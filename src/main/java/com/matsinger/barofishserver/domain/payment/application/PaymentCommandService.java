@@ -1,8 +1,8 @@
 package com.matsinger.barofishserver.domain.payment.application;
 
-import com.matsinger.barofishserver.domain.order.domain.OrderPaymentWay;
-import com.matsinger.barofishserver.domain.order.domain.Orders;
-import com.matsinger.barofishserver.domain.order.orderprductinfo.domain.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.OrderPaymentWay;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
 import com.matsinger.barofishserver.domain.payment.domain.Payments;
 import com.matsinger.barofishserver.domain.payment.portone.application.PgService;
 import com.matsinger.barofishserver.domain.payment.repository.PaymentRepository;

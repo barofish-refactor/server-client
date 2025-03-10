@@ -323,4 +323,8 @@ public class ProductQueryService {
     public List<Product> findAllTemporaryInactiveProductsByStoreId(int storeId) {
         return productQueryRepository.findAllTemporaryInactiveProductsByStoreId(storeId);
     }
+
+    public List<Product> findByIds(List<Integer> productIds) {
+        return productRepository.findAllById(productIds);
+    }
 }

@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.user.deliverplace;
 
-import com.matsinger.barofishserver.domain.order.domain.OrderDeliverPlace;
+import com.matsinger.barofishserver.order.domain.model.OrderDeliverPlace;
 import jakarta.persistence.*;
 import lombok.*;
 

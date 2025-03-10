@@ -1,21 +1,10 @@
 package com.matsinger.barofishserver.domain.payment.portone.application;
 
-import com.matsinger.barofishserver.domain.order.domain.BankCode;
-import com.matsinger.barofishserver.domain.order.repository.BankCodeRepository;
-import com.matsinger.barofishserver.domain.payment.portone.dto.PortOneAccessKeyRequest;
-import com.matsinger.barofishserver.domain.payment.portone.dto.PortOneAccessKeyResponse;
-import com.matsinger.barofishserver.domain.payment.portone.dto.PortOneVbankHolderResponse;
+import com.matsinger.barofishserver.order.domain.model.BankCode;
+import com.matsinger.barofishserver.order.domain.repository.BankCodeRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
 
 @Service
 @RequiredArgsConstructor

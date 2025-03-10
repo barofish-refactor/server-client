@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.matsinger.barofishserver.domain.grade.domain.QGrade.grade;
-import static com.matsinger.barofishserver.domain.order.domain.QOrders.orders;
-import static com.matsinger.barofishserver.domain.order.orderprductinfo.domain.QOrderProductInfo.orderProductInfo;
 import static com.matsinger.barofishserver.domain.product.domain.QProduct.product;
 import static com.matsinger.barofishserver.domain.product.optionitem.domain.QOptionItem.optionItem;
 import static com.matsinger.barofishserver.domain.review.domain.QReview.review;
@@ -31,6 +29,8 @@ import static com.matsinger.barofishserver.domain.review.domain.QReviewEvaluatio
 import static com.matsinger.barofishserver.domain.review.domain.QReviewLike.reviewLike;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreInfo.storeInfo;
 import static com.matsinger.barofishserver.domain.userinfo.domain.QUserInfo.userInfo;
+import static com.matsinger.barofishserver.order.domain.model.QOrderProductInfo.orderProductInfo;
+import static com.matsinger.barofishserver.order.domain.model.QOrders.orders;
 
 @Repository
 @RequiredArgsConstructor
