@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.notice.dto.NoticeAddReq;
 import com.matsinger.barofishserver.domain.notice.repository.NoticeRepository;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class NoticeCommandService {
     private final NoticeRepository noticeRepository;
     private final NoticeQueryService noticeQueryService;
     private final Common utils;
-    private final S3Uploader s3;
+    private final Uploader s3;
 
     public Notice addNotice(Notice notice) {
         return noticeRepository.save(notice);

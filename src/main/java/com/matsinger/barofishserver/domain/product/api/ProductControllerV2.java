@@ -24,6 +24,7 @@ import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -61,7 +62,7 @@ public class ProductControllerV2 {
 
     private final Common utils;
 
-    private final S3Uploader s3;
+    private final Uploader s3;
 
     @GetMapping("/list")
     public ResponseEntity<CustomResponse<Page<ProductListDto>>> selectProductListByUserV2(@RequestHeader(value = "Authorization", required = false) Optional<String> auth,

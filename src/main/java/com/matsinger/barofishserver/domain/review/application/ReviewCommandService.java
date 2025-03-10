@@ -14,7 +14,7 @@ import com.matsinger.barofishserver.domain.store.dto.SimpleStore;
 import com.matsinger.barofishserver.domain.userinfo.domain.UserInfo;
 import com.matsinger.barofishserver.domain.userinfo.repository.UserInfoRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class ReviewCommandService {
     private final StoreService storeService;
     private final SiteInfoQueryService siteInfoQueryService;
     private final ReviewQueryService reviewQueryService;
-    private final S3Uploader s3;
+    private final Uploader s3;
 
     public void likeReview(Integer userId, Integer reviewId) {
         reviewLikeRepository.save(ReviewLike.builder().userId(userId).reviewId(reviewId).build());

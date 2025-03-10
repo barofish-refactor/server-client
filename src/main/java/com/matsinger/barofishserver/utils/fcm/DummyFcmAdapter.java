@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Profile("local")
+@Profile({"local", "default"})
 public class DummyFcmAdapter implements FcmAdapter {
 
     @Override

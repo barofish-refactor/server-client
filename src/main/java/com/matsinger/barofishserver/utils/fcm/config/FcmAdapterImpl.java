@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @Service
-@Profile("!local")
+@Profile({"prod", "dev"})
 public class FcmAdapterImpl implements FcmAdapter {
     @Value("${fcm.key.path}")
     private String keyFilePath;

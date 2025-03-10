@@ -12,6 +12,7 @@ import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.RegexConstructor;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONArray;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class SiteInfoController {
     private final SiteInfoCommandService siteInfoCommandService;
 
     private final JwtService jwt;
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final RegexConstructor reg;
 
     @GetMapping("/")

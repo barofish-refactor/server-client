@@ -17,6 +17,7 @@ import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +39,7 @@ public class ReviewControllerV2 {
     private final JwtService jwt;
     private final ReviewQueryService reviewQueryService;
     private final ReviewCommandService reviewCommandService;
-    private final S3Uploader s3;
+    private final Uploader s3;
 
     @GetMapping("/management")
     public ResponseEntity<CustomResponse<Page<AdminReviewDto>>> selectAllReviewListByAdminV2(

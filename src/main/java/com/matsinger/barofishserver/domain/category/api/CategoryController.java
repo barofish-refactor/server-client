@@ -22,6 +22,7 @@ import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,7 +46,7 @@ public class CategoryController {
     private final ProductService productService;
     private final Common util;
 
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final JwtService jwt;
 
     @GetMapping("/")

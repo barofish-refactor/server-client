@@ -18,7 +18,7 @@ import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.RegexConstructor;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -42,7 +42,7 @@ public class BannerController {
 
     private final CategoryQueryService categoryQueryService;
     private final CurationQueryService curationQueryService;
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final RegexConstructor re;
     private final JwtService jwt;
 

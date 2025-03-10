@@ -1,9 +1,5 @@
 package com.matsinger.barofishserver.domain.review.api;
 
-import com.matsinger.barofishserver.order.application.service.OrderService;
-import com.matsinger.barofishserver.order.domain.model.Orders;
-import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
-import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.option.application.OptionQueryService;
@@ -25,9 +21,13 @@ import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.jwt.JwtService;
 import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.jwt.TokenInfo;
+import com.matsinger.barofishserver.order.application.service.OrderService;
+import com.matsinger.barofishserver.order.domain.model.OrderProductInfo;
+import com.matsinger.barofishserver.order.domain.model.Orders;
+import com.matsinger.barofishserver.order.domain.repository.OrderProductInfoRepository;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -57,7 +57,7 @@ public class ReviewController {
     private final OrderService orderService;
     private final JwtService jwt;
     private final Common utils;
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final OptionQueryService optionQueryService;
     private final OptionItemQueryService optionItemQueryService;
     private final OrderProductInfoRepository orderProductInfoRepository;

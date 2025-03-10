@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 
 @Service
-@Profile("local")
+@Profile({"local", "default"})
 public class DummyPgService implements PgService {
     @Override
     public void cancelPayment(CancelData cancelData) {

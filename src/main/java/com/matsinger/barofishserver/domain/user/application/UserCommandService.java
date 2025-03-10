@@ -56,7 +56,7 @@ import com.matsinger.barofishserver.domain.userinfo.dto.UserInfoDto;
 import com.matsinger.barofishserver.domain.userinfo.repository.UserInfoRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.Common;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import com.matsinger.barofishserver.utils.fcm.FcmTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -106,7 +106,7 @@ public class UserCommandService {
     private final CouponUserMapRepository couponUserMapRepository;
     private final SiteInfoQueryService siteInfoQueryService;
     private final GradeQueryService gradeQueryService;
-    private final S3Uploader s3;
+    private final Uploader uploader;
     private final Common utils;
     private final CouponCommandService couponCommandService;
     private final NotificationCommandService notificationCommandService;
@@ -183,9 +183,9 @@ public class UserCommandService {
         deliverPlaceRepository.save(request.toDeliveryPlaceEntity(savedUser, phoneNumber));
 
         ArrayList<String> directoryElement = new ArrayList<>(Arrays.asList("user", String.valueOf(savedUser.getId())));
-        String profileImageUrl = s3.getS3Url() + "/default_profile.png";
+        String profileImageUrl = uploader.getS3Url() + "/default_profile.png";
         if (profileImage != null) {
-            profileImageUrl = s3.upload(profileImage, directoryElement);
+            profileImageUrl = uploader.upload(profileImage, directoryElement);
             userInfoCommandService.setImageUrl(savedUser.getId(), profileImageUrl);
             return savedUser.getId();
         }

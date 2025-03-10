@@ -22,6 +22,7 @@ import com.matsinger.barofishserver.jwt.*;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import jakarta.persistence.criteria.Predicate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -50,7 +51,7 @@ public class StoreController {
     private final SiteInfoCommandService siteInfoCommandService;
     private final SiteInfoQueryService siteInfoQueryService;
     private final Common utils;
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final AdminLogCommandService adminLogCommandService;
     private final AdminLogQueryService adminLogQueryService;
     private final ProductQueryService productQueryService;

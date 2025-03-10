@@ -47,7 +47,7 @@ class OrderControllerTest {
 
         OrderProductInfo info = orderService.selectOrderProductInfo(orderProductInfoId);
         OptionItem requestOptionItem = optionItemQueryService.findById(info.getOptionItemId());
-        Option requestOption = optionQueryService.findById(requestOptionItem.getOptionId());
+        Option requestOption = optionQueryService.findById(requestOptionItem.getOption().getId());
         if (requestOption.isNeeded() == false) {
             throw new BusinessException("필수옵션인 경우에만 구매 확정이 가능합니다.");
         }
@@ -65,7 +65,7 @@ class OrderControllerTest {
         Product product = productService.selectProduct(info.getProductId());
         List<OrderProductInfo> notNeededOption = orderProductInfos.stream().filter(v -> {
             OptionItem optionItem = optionItemQueryService.findById(v.getOptionItemId());
-            Option option = optionQueryService.findById((optionItem.getOptionId()));
+            Option option = optionQueryService.findById((optionItem.getOption().getId()));
             if (!option.isNeeded() &&
                 v.getState() != OrderProductState.FINAL_CONFIRM &&
                 v.getProductId() == product.getId()) {

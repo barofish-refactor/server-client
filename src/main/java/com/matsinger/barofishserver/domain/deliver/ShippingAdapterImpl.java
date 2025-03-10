@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Profile("!local")
+@Profile({"prod", "dev"})
 public class ShippingAdapterImpl implements ShippingApiAdapter {
     @Value("${smart-parcel.apiKey}")
     private String accessKey;

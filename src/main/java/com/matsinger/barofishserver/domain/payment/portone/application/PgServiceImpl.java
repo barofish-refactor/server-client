@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Service
-@Profile("!local")
+@Profile({"prod", "dev"})
 public class PgServiceImpl implements PgService {
 
     @Value("${iamport.credentials.apiKey}")

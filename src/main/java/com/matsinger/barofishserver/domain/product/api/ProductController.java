@@ -41,7 +41,7 @@ import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +82,7 @@ public class ProductController {
 
     private final Common utils;
 
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final BasketTastingNoteQueryService basketTastingNoteQueryService;
     private final StoreInfoQueryService storeInfoQueryService;
 

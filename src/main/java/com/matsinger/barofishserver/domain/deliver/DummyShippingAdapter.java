@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@Profile("local")
+@Profile({"local", "default"})
 public class DummyShippingAdapter implements ShippingApiAdapter {
     @Override
     public List<Deliver.Company> getRecommendDeliverCompanyList(String invoice) {

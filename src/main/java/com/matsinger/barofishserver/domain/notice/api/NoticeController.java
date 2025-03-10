@@ -13,6 +13,7 @@ import com.matsinger.barofishserver.jwt.TokenInfo;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
 import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,7 +33,7 @@ public class NoticeController {
     private final NoticeQueryService noticeQueryService;
     private final NoticeCommandService noticeCommandService;
     private final Common utils;
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final JwtService jwt;
 
     @GetMapping("/")

@@ -14,7 +14,7 @@ import com.matsinger.barofishserver.jwt.JwtService;
 import com.matsinger.barofishserver.jwt.TokenAuthType;
 import com.matsinger.barofishserver.utils.Common;
 import com.matsinger.barofishserver.utils.CustomResponse;
-import com.matsinger.barofishserver.utils.S3.S3Uploader;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Description;
 import org.springframework.data.domain.Page;
@@ -43,7 +43,7 @@ public class CurationController {
 
     private final Common util;
 
-    private final S3Uploader s3;
+    private final Uploader s3;
     private final JwtService jwt;
 
     // GET

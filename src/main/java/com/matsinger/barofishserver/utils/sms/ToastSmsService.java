@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
 @Service
-@Profile("!local")
+@Profile({"prod", "dev"})
 public class ToastSmsService implements SmsService {
     private String BASE_URL = "https://api-sms.cloud.toast.com";
     @Value("${nhn.toast.apiKey}")
