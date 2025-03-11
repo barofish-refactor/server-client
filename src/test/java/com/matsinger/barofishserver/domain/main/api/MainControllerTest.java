@@ -1,4 +1,4 @@
-부package com.matsinger.barofishserver.domain.main.api;
+package com.matsinger.barofishserver.domain.main.api;
 
 import com.matsinger.barofishserver.domain.data.curation.application.CurationQueryService;
 import com.matsinger.barofishserver.domain.data.curation.domain.Curation;
