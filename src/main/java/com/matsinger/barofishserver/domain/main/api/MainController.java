@@ -11,6 +11,7 @@ import com.matsinger.barofishserver.domain.data.topbar.domain.TopBar;
 import com.matsinger.barofishserver.domain.main.dto.Main;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
+import com.matsinger.barofishserver.domain.store.application.DailyStoreService;
 import com.matsinger.barofishserver.domain.store.application.StoreService;
 import com.matsinger.barofishserver.domain.store.dto.SimpleStore;
 import com.matsinger.barofishserver.domain.store.repository.StoreInfoRepository;
@@ -40,11 +41,10 @@ public class MainController {
     private final BannerQueryService bannerService;
     private final CurationQueryService curationQueryService;
     private final ProductService productService;
-
-    private final StoreInfoRepository storeInfoRepository;
     private final StoreService storeService;
     private final JwtService jwt;
     private final BannerQueryService bannerQueryService;
+    private final DailyStoreService dailyStoreService;
 
     @GetMapping("")
     public ResponseEntity<CustomResponse<Main>> selectMainItems(@RequestHeader(value = "Authorization") Optional<String> auth) {
@@ -93,7 +93,7 @@ public class MainController {
         TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ALLOW, TokenAuthType.USER), auth);
         Integer userId = tokenInfo.getId();
 
-        List<SimpleStore> storeDtos = storeService.selectReliableStoreRandomOrder().stream().map(v -> {
+        List<SimpleStore> storeDtos = storeService.selectStoreInfoList().stream().map(v -> {
             SimpleStore store = storeService.convert2SimpleDto(v, userId);
             return store;
         }).toList();

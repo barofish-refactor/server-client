@@ -28,6 +28,13 @@ public interface StoreInfoRepository extends JpaRepository<StoreInfo, Integer> {
     @Query(value = "SELECT si.*\n" +
             "FROM store_info si\n" +
             "         JOIN store s ON s.id = si.store_id\n" +
+            "WHERE si.is_reliable = TRUE AND si.is_deleted = FALSE\n" +
+            "AND s.state = 'ACTIVE'", nativeQuery = true)
+    List<StoreInfo> findAllByIsReliableTrueAndIsDeletedFalse();
+
+    @Query(value = "SELECT si.*\n" +
+            "FROM store_info si\n" +
+            "         JOIN store s ON s.id = si.store_id\n" +
             "         LEFT JOIN store_scrap ss ON s.id = ss.store_id\n" +
             "WHERE s.state = 'ACTIVE'\n" +
             "AND INSTR(si.name, :keyword) > 0\n" +
