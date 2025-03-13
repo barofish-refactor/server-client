@@ -150,7 +150,7 @@ public class ProductController {
             if (category != null)
                 predicates.add(builder.like(root.get("category").get("name"), "%" + category + "%"));
             if (partnerId != null)
-                predicates.add(builder.and(root.get("store").get("id").in(Arrays.stream(partnerId.split(",")).map(
+                predicates.add(builder.and(root.get("storeId").in(Arrays.stream(partnerId.split(",")).map(
                         Integer::valueOf).toList())));
             if (state != null)
                 predicates.add(builder.and(root.get("state").in(Arrays.stream(state.split(",")).map(ProductState::valueOf).toList())));
