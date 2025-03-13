@@ -1,0 +1,50 @@
+server.port: 8080
+
+spring:
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/barofish-refactor
+    username: root
+    password: password
+    driverClassName: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties:
+      hibernate:
+        ddl-auto: none
+        format_sql: true
+        default_batch_fetch_size: 10
+    show-sql: true
+
+  flyway:
+    enabled: true
+
+  jwt:
+    secret: embqxqDWXvSsdfeArcnN7vuxErQjfskqaMswsX9dfen9sTbyCMkpeNJz5w3FLWkxCfGVTgZ59kgJcKvewef9dYeM9QYsjccJcN5YjbfafK5dGrBDzpdwefabfDx82BNA6WJDFL2b7bUHL
+    jwtExpirationInMs: 86400
+
+logging:
+  level:
+    org:
+      hibernate:
+        type: trace
+        persister:
+          entity:
+            WARN
+
+cloud:
+  aws:
+    credentials:
+      accessKey: AKIAR7B7LLSBDXLRZEXO
+      secretKey: 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
+    s3:
+      bucket: barofish-dev
+      imageUrl: https://barofish-dev.s3.ap-northeast-2.amazonaws.com
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+
+utils:
+  aes256:
+    secret-key: "barofish"

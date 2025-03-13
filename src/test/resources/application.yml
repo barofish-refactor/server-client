@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/barofish-refactor
+    username: root
+    password: password
+    driverClassName: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 10
+        highlight_sql: true
+    show-sql: true
+
+  jwt:
+    secret: embqxqDWXvSsdfeArcnN7vuxErQjfskqaMswsX9dfen9sTbyCMkpeNJz5w3FLWkxCfGVTgZ59kgJcKvewef9dYeM9QYsjccJcN5YjbfafK5dGrBDzpdwefabfDx82BNA6WJDFL2b7bUHL
+    jwtExpirationInMs: 86400
+
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql: TRACE
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+#    com.matsinger.barofishserver.domain.main: DEBUG
+
+utils:
+  aes256:
+    secret-key: "barofish"
+
+cloud:
+  aws:
+    s3:
+      imageUrl: asb
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+    groups:
+      enabled: true
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+  packages-to-scan: com.matsinger.barofishserver
+
