@@ -87,23 +87,23 @@ public class ProductQueryService {
         }
 
         // productIds의 순서에 따라 제품을 정렬
-        List<ProductListDto> sortedProducts = productIds.stream()
-                .map(id -> pagedProductDtos.stream()
-                        .filter(p -> p.getId().equals(id)).findFirst().orElse(null))
-                .collect(Collectors.toList());
+//        List<ProductListDto> sortedProducts = productIds.stream()
+//                .map(id -> pagedProductDtos.stream()
+//                        .filter(p -> p.getId().equals(id)).findFirst().orElse(null))
+//                .collect(Collectors.toList());
+//
+//        int offset = (int) pageRequest.getOffset();
+//        int pageSize = pageRequest.getPageSize();
+//        if (pageSize > sortedProducts.size()) {
+//            pageSize = sortedProducts.size();
+//        }
+//        if (offset > sortedProducts.size()) {
+//            offset = sortedProducts.size();
+//        }
+//        List<ProductListDto> subList = sortedProducts.subList(offset, pageSize);
 
-        int offset = (int) pageRequest.getOffset();
-        int pageSize = pageRequest.getPageSize();
-        if (pageSize > sortedProducts.size()) {
-            pageSize = sortedProducts.size();
-        }
-        if (offset > sortedProducts.size()) {
-            offset = sortedProducts.size();
-        }
-        List<ProductListDto> subList = sortedProducts.subList(offset, pageSize);
 
-
-        return new PageImpl<>(subList, pageRequest, pagedProductDtos.getTotalElements());
+        return pagedProductDtos;
     }
 
     public int countProducts(
