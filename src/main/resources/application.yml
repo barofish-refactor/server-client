@@ -32,19 +32,6 @@ logging:
           entity:
             WARN
 
-cloud:
-  aws:
-    credentials:
-      accessKey: AKIAR7B7LLSBDXLRZEXO
-      secretKey: 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
-    s3:
-      bucket: barofish-dev
-      imageUrl: https://barofish-dev.s3.ap-northeast-2.amazonaws.com
-    region:
-      static: ap-northeast-2
-    stack:
-      auto: false
-
 utils:
   aes256:
     secret-key: "barofish"
