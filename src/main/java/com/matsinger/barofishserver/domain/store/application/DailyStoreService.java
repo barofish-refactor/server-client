@@ -2,9 +2,11 @@ package com.matsinger.barofishserver.domain.store.application;
 
 import com.matsinger.barofishserver.domain.store.domain.DailyStore;
 import com.matsinger.barofishserver.domain.store.domain.Store;
-import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.repository.DailyStoreRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,5 +45,13 @@ public class DailyStoreService {
             .toList();
         
         dailyStoreRepository.saveAll(newStores);
+    }
+
+    public Page<DailyStore> getReliableStores(Pageable pageable) {
+        Page<DailyStore> dailyStores = dailyStoreRepository.findByDeletedIsFalse(pageable);
+        if (dailyStores.isEmpty()) {
+            refreshDailyStores();
+        }
+        return dailyStoreRepository.findByDeletedIsFalse(pageable);
     }
 }

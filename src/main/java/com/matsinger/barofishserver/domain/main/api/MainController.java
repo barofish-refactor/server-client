@@ -12,6 +12,7 @@ import com.matsinger.barofishserver.domain.main.dto.Main;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.store.application.DailyStoreService;
+import com.matsinger.barofishserver.domain.store.application.StoreApplicationService;
 import com.matsinger.barofishserver.domain.store.application.StoreService;
 import com.matsinger.barofishserver.domain.store.dto.SimpleStore;
 import com.matsinger.barofishserver.domain.store.repository.StoreInfoRepository;
@@ -22,10 +23,7 @@ import com.matsinger.barofishserver.utils.CustomResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +39,9 @@ public class MainController {
     private final BannerQueryService bannerService;
     private final CurationQueryService curationQueryService;
     private final ProductService productService;
-    private final StoreService storeService;
     private final JwtService jwt;
     private final BannerQueryService bannerQueryService;
-    private final DailyStoreService dailyStoreService;
+    private final StoreApplicationService storeApplicationService;
 
     @GetMapping("")
     public ResponseEntity<CustomResponse<Main>> selectMainItems(@RequestHeader(value = "Authorization") Optional<String> auth) {
@@ -87,17 +84,18 @@ public class MainController {
     }
 
     @GetMapping("/store")
-    public ResponseEntity<CustomResponse<List<SimpleStore>>> selectMainStoreList(@RequestHeader(value = "Authorization") Optional<String> auth) {
+    public ResponseEntity<CustomResponse<List<SimpleStore>>> selectMainStoreList(@RequestHeader(value = "Authorization") Optional<String> auth,
+                                                                                 @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+                                                                                 @RequestParam(value = "take", required = false, defaultValue = "10") Integer take) {
         CustomResponse<List<SimpleStore>> res = new CustomResponse<>();
 
         TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ALLOW, TokenAuthType.USER), auth);
         Integer userId = tokenInfo.getId();
+        
+        PageRequest pageRequest = PageRequest.of(page, take);
+        List<SimpleStore> response = storeApplicationService.selectRandomReliableStores(userId, pageRequest);
 
-        List<SimpleStore> storeDtos = storeService.selectStoreInfoList().stream().map(v -> {
-            SimpleStore store = storeService.convert2SimpleDto(v, userId);
-            return store;
-        }).toList();
-        res.setData(Optional.of(storeDtos));
+        res.setData(Optional.of(response));
         return ResponseEntity.ok(res);
     }
 }

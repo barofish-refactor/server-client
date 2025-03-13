@@ -1,6 +1,9 @@
 package com.matsinger.barofishserver.domain.store.repository;
 
 import com.matsinger.barofishserver.domain.store.domain.DailyStore;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +20,6 @@ public interface DailyStoreRepository extends JpaRepository<DailyStore, Integer>
 
     @Query("SELECT d FROM DailyStore d WHERE d.deleted = false ORDER BY d.createdAt DESC LIMIT 1")
     Optional<DailyStore> findLatestActive();
+
+    Page<DailyStore> findByDeletedIsFalse(Pageable pageable);
 }

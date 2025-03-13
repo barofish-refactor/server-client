@@ -44,6 +44,11 @@ import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.repository.StoreInfoRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.Common;
+import com.matsinger.barofishserver.domain.product.dto.ReviewProductInfoResponse;
+import com.matsinger.barofishserver.domain.product.dto.StoreReviewProductInfo;
+import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
+import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
+import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +60,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -83,6 +91,7 @@ public class ProductService {
     private final AddressQueryService addressQueryService;
     private final Common utils;
     private final ReviewLikeRepository reviewLikeRepository;
+    private final ReviewRepositoryImpl reviewRepositoryImpl;
 
     public List<Product> selectProductListWithIds(List<Integer> ids) {
         return productRepository.findAllByIdIn(ids);
@@ -661,5 +670,40 @@ public class ProductService {
         List<Product> products = productRepository.findAllByPromotionStartAtBeforeAndPromotionEndAtAfter(utils.now(), utils.now());
         products.forEach(v -> v.setState(ProductState.ACTIVE));
         productRepository.saveAll(products);
+    }
+
+    public ReviewProductInfoResponse getReviewAndProductInfos(List<Integer> storeIds) {
+        Map<Integer, StoreReviewProductInfo> storeInfos = new HashMap<>();
+        
+        for (Integer storeId : storeIds) {
+
+            Integer reviewCount = reviewRepository.countByIsDeletedFalseAndStoreId(storeId);
+            Integer productCount = productRepository.countAllByStoreId(storeId);
+            List<ReviewEvaluationSummaryDto> productReviewEvaluations = reviewRepositoryImpl.getProductSumStoreReviewEvaluations(storeId);
+
+            StoreReviewProductInfo storeInfo = StoreReviewProductInfo.builder()
+                    .reviewStatistics(toReviewStatistic(productReviewEvaluations))
+                    .reviewCount(reviewCount)
+                    .productCount(productCount)
+                    .build();
+                    
+            storeInfos.put(storeId, storeInfo);
+        }
+        
+        return ReviewProductInfoResponse.builder()
+                .storeInfos(storeInfos)
+                .build();
+    }
+
+    @NotNull
+    private static List<ReviewStatistic> toReviewStatistic(List<ReviewEvaluationSummaryDto> productReviewEvaluations) {
+        List<ReviewStatistic> reviewStatistics = productReviewEvaluations.stream()
+            .filter(evaluation -> evaluation.getEvaluationType() != null && evaluation.getEvaluationSum() != null)
+            .map(evaluation -> ReviewStatistic.builder()
+                .key(evaluation.getEvaluationType().toString())
+                .count(evaluation.getEvaluationSum().intValue())
+                .build())
+            .collect(Collectors.toList());
+        return reviewStatistics;
     }
 }

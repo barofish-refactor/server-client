@@ -31,14 +31,6 @@ public class DailyStore extends BaseTimeEntity {
     public void markAsDeleted() {
         this.deleted = true;
     }
-
-    public static DailyStore createFrom(StoreInfo storeInfo) {
-        return DailyStore.builder()
-            .storeId(storeInfo.getStoreId())
-            .deleted(false)
-            .storeInfo(storeInfo)
-            .build();
-    }
     
     public static DailyStore createFrom(Store store) {
         return DailyStore.builder()
