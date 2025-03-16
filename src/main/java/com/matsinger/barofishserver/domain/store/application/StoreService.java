@@ -230,7 +230,7 @@ public class StoreService {
     }
 
 
-    public List<StoreInfo> selectReliableStoreRandomOrder() {
-        return storeInfoRepository.selectReliableStoreRandomOrder();
+    public List<Store> selectReliableStore() {
+        return storeRepository.findAllByStateAndStoreInfo_IsReliableTrue(StoreState.ACTIVE);
     }
 }
