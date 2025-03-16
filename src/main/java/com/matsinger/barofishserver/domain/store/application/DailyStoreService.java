@@ -53,7 +53,7 @@ public class DailyStoreService {
     }
 
     public Page<DailyStore> getTodayReliableStores(Pageable pageable) {
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime today = LocalDate.now().atStartOfDay();
         return dailyStoreRepository.findByCreatedAtTodayAndDeletedIsFalse(pageable, today);
     }
 }
