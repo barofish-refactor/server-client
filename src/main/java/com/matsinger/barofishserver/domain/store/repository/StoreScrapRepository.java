@@ -10,4 +10,6 @@ public interface StoreScrapRepository extends JpaRepository<StoreScrap, StoreScr
     List<StoreScrap> findByUserId(Integer userId);
 
     Boolean existsByStoreIdAndUserId(Integer storeId, Integer userId);
+
+    List<StoreScrap> findByUserIdAndStoreIdIn(Integer userId, List<Integer> storeIds);
 }

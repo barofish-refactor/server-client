@@ -6,6 +6,7 @@ import com.matsinger.barofishserver.domain.store.domain.StoreDeliverFeeType;
 import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.domain.StoreState;
 import com.matsinger.barofishserver.utils.Common;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -23,8 +24,7 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class PartnerExcelService {
-    @Value("${cloud.aws.s3.imageUrl}")
-    private String s3Url;
+    private final Uploader uploader;
     private final StoreService storeService;
     private final Common utils;
     private final ExcelService excelService;
@@ -130,7 +130,9 @@ public class PartnerExcelService {
                             BCrypt.gensalt())).joinAt(utils.now()).build();
             StoreInfo
                     storeInfo =
-                    StoreInfo.builder().backgroundImage(s3Url + "/default_backgroud.png").profileImage(s3Url +
+                    StoreInfo.builder()
+                            .backgroundImage(uploader.getS3Url() + "/default_backgroud.png")
+                            .profileImage(uploader.getS3Url() +
                             "/default_profile.png").name(partnerName).location(location).keyword(keyword).visitNote("").oneLineDescription(
                             "").settlementRate(settlementRate).bankName(bankName).bankHolder(bankHolder).bankAccount(
                             bankAccount).representativeName(representativeName).companyId(companyId).businessType(

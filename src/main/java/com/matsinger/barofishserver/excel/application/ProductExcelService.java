@@ -13,6 +13,7 @@ import com.matsinger.barofishserver.domain.store.application.StoreService;
 import com.matsinger.barofishserver.domain.store.domain.Store;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.Common;
+import com.matsinger.barofishserver.utils.S3.Uploader;
 import lombok.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -27,8 +28,7 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 public class ProductExcelService {
-    @Value("${cloud.aws.s3.imageUrl}")
-    private String s3Url;
+    private final Uploader uploader;
     private final Common utils;
     private final ExcelService excelService;
     private final StoreService storeService;
@@ -187,9 +187,9 @@ public class ProductExcelService {
             Product
                     newProduct =
                     Product.builder().storeId(store.get().getId()).category(category.get()).state(state).images("[" +
-                            s3Url +
+                            uploader.getS3Url() +
                             "/default_product.png]").title(productName).originPrice(0).discountRate(0).deliveryInfo(
-                            deliveryInfo).descriptionImages(s3Url + "/default_description.html").expectedDeliverDay(
+                            deliveryInfo).descriptionImages(uploader.getS3Url() + "/default_description.html").expectedDeliverDay(
                             expectedDeliverDay).createdAt(utils.now()).needTaxation(needTaxation).pointRate(pointRate).deliverBoxPerAmount(
                             deliverBoxPerAmount).build();
             Option

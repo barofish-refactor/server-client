@@ -1,6 +1,7 @@
 package com.matsinger.barofishserver;
 
 import com.matsinger.barofishserver.domain.deliver.application.DeliverService;
+import com.matsinger.barofishserver.domain.store.application.DailyStoreService;
 import com.matsinger.barofishserver.order.application.service.OrderService;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.weeksdate.application.WeeksDateCommandService;
@@ -23,6 +24,7 @@ public class ScheduleTasks {
     private final UserCommandService userCommandService;
     private final ProductService productService;
     private final WeeksDateCommandService weeksDateCommandService;
+    private final DailyStoreService dailyStoreService;
 
     @Scheduled(cron = "0 0 0 * * 1")
     public void SearchKeywordSchedule() {
@@ -57,5 +59,10 @@ public class ScheduleTasks {
     @Scheduled(cron = "0 0 * * * 1") // 매주 일요일 정각에 실행
     public void addDateInfoInTheNextTwoWeeks() throws IOException {
         weeksDateCommandService.saveThisAndNextWeeksDate(LocalDate.now());
+    }
+
+    @Scheduled(cron = "0 0 3 * * *") // 매일 새벽 3시에 실행
+    public void refreshRandomStoreList() {
+        dailyStoreService.refreshDailyStores();
     }
 }
