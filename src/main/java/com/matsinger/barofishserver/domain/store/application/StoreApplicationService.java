@@ -1,11 +1,11 @@
 package com.matsinger.barofishserver.domain.store.application;
 
 import com.matsinger.barofishserver.domain.product.application.ProductService;
-import com.matsinger.barofishserver.domain.product.dto.ReviewProductInfoResponse;
-import com.matsinger.barofishserver.domain.product.dto.StoreReviewProductInfo;
+import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
 import com.matsinger.barofishserver.domain.store.domain.DailyStore;
 import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.domain.StoreScrap;
+import com.matsinger.barofishserver.domain.store.domain.StoreSummary;
 import com.matsinger.barofishserver.domain.store.dto.SimpleStore;
 import com.matsinger.barofishserver.domain.store.repository.StoreScrapRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class StoreApplicationService {
     private final DailyStoreService dailyStoreService;
     private final StoreScrapRepository storeScrapRepository;
-    private final ProductService productService;
+    private final StoreSummaryQueryService storeSummaryQueryService;
 
     public List<SimpleStore> selectRandomReliableStores(Integer userId, PageRequest pageRequest) {
         Page<DailyStore> reliableStores = Optional.of(dailyStoreService.getTodayReliableStores(pageRequest))
@@ -46,22 +46,20 @@ public class StoreApplicationService {
             }
         }
 
-        ReviewProductInfoResponse reviewAndProductInfos = productService.getReviewAndProductInfos(storeIds);
+        Map<Integer, StoreSummary> storeSummaries = storeSummaryQueryService.getStoreSummaryMapByStoreIds(storeIds);
 
         return reliableStores.getContent().stream()
                 .map(dailyStore -> createSimpleStore(
                         dailyStore,
                         likeMap.getOrDefault(dailyStore.getStoreId(), false),
-                        reviewAndProductInfos
+                        storeSummaries.get(dailyStore.getStoreId())
                 ))
                 .collect(Collectors.toList());
     }
 
-    private SimpleStore createSimpleStore(DailyStore dailyStore, boolean isLike, ReviewProductInfoResponse reviewProductInfo) {
+    private SimpleStore createSimpleStore(DailyStore dailyStore, boolean isLike, StoreSummary storeSummary) {
         Integer storeId = dailyStore.getStoreId();
         StoreInfo storeInfo = dailyStore.getStoreInfo();
-
-        StoreReviewProductInfo info = reviewProductInfo.getStoreInfo(storeId);
 
         return SimpleStore.builder()
                 .storeId(storeId)
@@ -75,9 +73,9 @@ public class StoreApplicationService {
                 .refundDeliverFee(storeInfo.getRefundDeliverFee())
                 .oneLineDescription(storeInfo.getOneLineDescription())
                 .isLike(isLike)
-                .reviewStatistic(info.getReviewStatistics())
-                .reviewCount(info.getReviewCount())
-                .productCount(info.getProductCount())
+                .reviewStatistic(ReviewStatistic.from(storeSummary))
+                .reviewCount(storeSummary.getReviewCnt())
+                .productCount(storeSummary.getProductCnt())
                 .deliverCompany(storeInfo.getDeliverCompany())
                 .minStorePrice(storeInfo.getMinStorePrice())
                 .deliveryFee(storeInfo.getDeliveryFee())
