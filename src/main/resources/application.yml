@@ -15,6 +15,7 @@ spring:
         format_sql: true
         default_batch_fetch_size: 10
     show-sql: true
+#    open-in-view: false
 
   flyway:
     enabled: true

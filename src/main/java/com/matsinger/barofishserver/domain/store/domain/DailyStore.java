@@ -3,6 +3,7 @@ package com.matsinger.barofishserver.domain.store.domain;
 import com.matsinger.barofishserver.global.config.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,6 +14,10 @@ import java.time.LocalDateTime;
 @Builder
 public class DailyStore extends BaseTimeEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
     @Column(name = "store_id", nullable = false)
     private int storeId;
 
@@ -22,11 +27,6 @@ public class DailyStore extends BaseTimeEntity {
 
     @Column(name = "deleted")
     private boolean deleted;
-
-    public boolean isCreatedToday() {
-        return getCreatedAt().toLocalDateTime().toLocalDate()
-            .isEqual(LocalDateTime.now().toLocalDate());
-    }
 
     public void markAsDeleted() {
         this.deleted = true;

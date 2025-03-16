@@ -13,10 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,37 +27,34 @@ public class StoreApplicationService {
     private final ProductService productService;
 
     public List<SimpleStore> selectRandomReliableStores(Integer userId, PageRequest pageRequest) {
-        Page<DailyStore> reliableStores = dailyStoreService.getReliableStores(pageRequest);
-        
-        if (reliableStores.isEmpty()) {
-            return Collections.emptyList();
-        }
+        Page<DailyStore> reliableStores = Optional.of(dailyStoreService.getTodayReliableStores(pageRequest))
+                .filter(stores -> !stores.isEmpty())
+                .orElseGet(() -> {
+                    dailyStoreService.refreshDailyStores();
+                    return dailyStoreService.getTodayReliableStores(pageRequest);
+                });
 
         List<Integer> storeIds = reliableStores.stream()
                 .map(DailyStore::getStoreId)
                 .toList();
-                
-        // 좋아요 정보 조회 (userId가 있는 경우)
+
         Map<Integer, Boolean> likeMap = new HashMap<>();
         if (userId != null) {
             List<StoreScrap> scrapedStores = storeScrapRepository.findByUserIdAndStoreIdIn(userId, storeIds);
-            // 좋아요 정보를 Map으로 변환
             for (StoreScrap scrap : scrapedStores) {
                 likeMap.put(scrap.getStoreId(), true);
             }
         }
 
-        // 리뷰 및 상품 정보 한 번에 조회
         ReviewProductInfoResponse reviewAndProductInfos = productService.getReviewAndProductInfos(storeIds);
-        
-        // SimpleStore 객체 생성
+
         return reliableStores.getContent().stream()
-            .map(dailyStore -> createSimpleStore(
-                dailyStore, 
-                likeMap.getOrDefault(dailyStore.getStoreId(), false),
-                reviewAndProductInfos
-            ))
-            .collect(Collectors.toList());
+                .map(dailyStore -> createSimpleStore(
+                        dailyStore,
+                        likeMap.getOrDefault(dailyStore.getStoreId(), false),
+                        reviewAndProductInfos
+                ))
+                .collect(Collectors.toList());
     }
 
     private SimpleStore createSimpleStore(DailyStore dailyStore, boolean isLike, ReviewProductInfoResponse reviewProductInfo) {
@@ -65,26 +62,26 @@ public class StoreApplicationService {
         StoreInfo storeInfo = dailyStore.getStoreInfo();
 
         StoreReviewProductInfo info = reviewProductInfo.getStoreInfo(storeId);
-        
+
         return SimpleStore.builder()
-            .storeId(storeId)
-            .backgroundImage(storeInfo.getbackgroundImage())
-            .profileImage(storeInfo.getProfileImage())
-            .name(storeInfo.getName())
-            .location(storeInfo.getLocation())
-            .isReliable(storeInfo.getIsReliable())
-            .keyword(storeInfo.getKeyword().split(","))
-            .visitNote(storeInfo.getVisitNote())
-            .refundDeliverFee(storeInfo.getRefundDeliverFee())
-            .oneLineDescription(storeInfo.getOneLineDescription())
-            .isLike(isLike)
-            .reviewStatistic(info.getReviewStatistics())
-            .reviewCount(info.getReviewCount())
-            .productCount(info.getProductCount())
-            .deliverCompany(storeInfo.getDeliverCompany())
-            .minStorePrice(storeInfo.getMinStorePrice())
-            .deliveryFee(storeInfo.getDeliveryFee())
-            .isConditional(storeInfo.getIsConditional())
-            .build();
+                .storeId(storeId)
+                .backgroundImage(storeInfo.getbackgroundImage())
+                .profileImage(storeInfo.getProfileImage())
+                .name(storeInfo.getName())
+                .location(storeInfo.getLocation())
+                .isReliable(storeInfo.getIsReliable())
+                .keyword(storeInfo.getKeyword().split(","))
+                .visitNote(storeInfo.getVisitNote())
+                .refundDeliverFee(storeInfo.getRefundDeliverFee())
+                .oneLineDescription(storeInfo.getOneLineDescription())
+                .isLike(isLike)
+                .reviewStatistic(info.getReviewStatistics())
+                .reviewCount(info.getReviewCount())
+                .productCount(info.getProductCount())
+                .deliverCompany(storeInfo.getDeliverCompany())
+                .minStorePrice(storeInfo.getMinStorePrice())
+                .deliveryFee(storeInfo.getDeliveryFee())
+                .isConditional(storeInfo.getIsConditional())
+                .build();
     }
 }
