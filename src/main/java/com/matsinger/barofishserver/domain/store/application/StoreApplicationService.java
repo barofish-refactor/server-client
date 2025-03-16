@@ -1,6 +1,5 @@
 package com.matsinger.barofishserver.domain.store.application;
 
-import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
 import com.matsinger.barofishserver.domain.store.domain.DailyStore;
 import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
