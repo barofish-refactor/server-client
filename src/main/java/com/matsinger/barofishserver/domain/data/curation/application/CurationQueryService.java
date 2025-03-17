@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.data.curation.domain.CurationProductM
 import com.matsinger.barofishserver.domain.data.curation.domain.CurationState;
 import com.matsinger.barofishserver.domain.data.curation.dto.CurationDto;
 import com.matsinger.barofishserver.domain.data.curation.repository.CurationProductMapRepository;
+import com.matsinger.barofishserver.domain.data.curation.repository.CurationProductMapQueryRepository;
 import com.matsinger.barofishserver.domain.data.curation.repository.CurationRepository;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.domain.Product;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 public class CurationQueryService {
     private final CurationRepository curationRepository;
     private final CurationProductMapRepository curationProductRepository;
+    private final CurationProductMapQueryRepository curationProductMapQueryRepository;
     private final ProductRepository productRepository;
     private final ProductService productService;
 
@@ -86,9 +88,9 @@ public class CurationQueryService {
                 .collect(Collectors.toList());
 
         Map<Integer, List<Product>> productsByCuration = selectProductsByCurationIds(curationIds, PageRequest.of(0, 10));
-
         List<Product> allProducts = productsByCuration.values().stream()
                 .flatMap(Collection::stream)
+                .distinct()
                 .collect(Collectors.toList());
 
         Map<Integer, ProductListDto> productDtoMap = productService.convertProductsToListDtosMap(allProducts, userId);
@@ -107,11 +109,9 @@ public class CurationQueryService {
     }
 
     public Map<Integer, List<Product>> selectProductsByCurationIds(List<Integer> curationIds, PageRequest pageRequest) {
-        List<CurationProductMap> curationProductMaps = curationProductRepository
+        Map<Integer, List<CurationProductMap>> mapsByCuration = curationProductMapQueryRepository
                 .findAllByCurationIdInWithPaging(curationIds, pageRequest.getPageSize());
 
-        Map<Integer, List<CurationProductMap>> mapsByCuration = curationProductMaps.stream()
-                .collect(Collectors.groupingBy(map -> map.getCuration().getId()));
 
         Map<Integer, List<Product>> result = new HashMap<>();
         for (Integer curationId : curationIds) {
