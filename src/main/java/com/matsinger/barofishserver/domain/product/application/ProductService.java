@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.address.domain.Address;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketProductOptionRepository;
 import com.matsinger.barofishserver.domain.category.dto.CategoryDto;
 import com.matsinger.barofishserver.domain.category.filter.application.CategoryFilterService;
+import com.matsinger.barofishserver.domain.compare.domain.SaveProduct;
 import com.matsinger.barofishserver.domain.compare.domain.SaveProductId;
 import com.matsinger.barofishserver.domain.compare.filter.domain.CompareFilter;
 import com.matsinger.barofishserver.domain.compare.filter.repository.CompareFilterRepository;
@@ -19,6 +20,7 @@ import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.option.dto.OptionDto;
 import com.matsinger.barofishserver.domain.product.option.repository.OptionRepository;
+import com.matsinger.barofishserver.domain.product.optionitem.application.OptionItemQueryService;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.domain.product.optionitem.dto.OptionItemDto;
 import com.matsinger.barofishserver.domain.product.optionitem.repository.OptionItemRepository;
@@ -60,10 +62,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -92,6 +97,7 @@ public class ProductService {
     private final Common utils;
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewRepositoryImpl reviewRepositoryImpl;
+    private final OptionItemQueryService optionItemQueryService;
 
     public List<Product> selectProductListWithIds(List<Integer> ids) {
         return productRepository.findAllByIdIn(ids);
@@ -705,5 +711,104 @@ public class ProductService {
                 .build())
             .collect(Collectors.toList());
         return reviewStatistics;
+    }
+
+    public Map<Integer, ProductListDto> convertProductsToListDtosMap(List<Product> products, Integer userId) {
+        if (products.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<Integer, Integer> reviewCountMap = collectReviewCounts(products);
+        Map<Integer, OptionItem> optionItemMap = collectOptionItems(products);
+        Map<Integer, List<ProductFilterValueDto>> filterValuesMap = collectFilterValues(products);
+        Map<Integer, Boolean> likeMap = collectLikeInfo(products, userId);
+
+        return createProductDtoMap(products, reviewCountMap, optionItemMap, filterValuesMap, likeMap, userId);
+    }
+
+    private Map<Integer, Integer> collectReviewCounts(List<Product> products) {
+        List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+        return reviewQueryService.countReviewsWithoutDeletedByProductIds(productIds);
+    }
+
+    private Map<Integer, OptionItem> collectOptionItems(List<Product> products) {
+        List<Integer> optionItemIds = products.stream()
+                .map(Product::getRepresentOptionItemId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return optionItemQueryService.selectOptionItemByIds(optionItemIds);
+    }
+
+    private Map<Integer, List<ProductFilterValueDto>> collectFilterValues(List<Product> products) {
+        List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+        return productFilterService.selectProductFilterValuesByProductIds(productIds);
+    }
+
+    private Map<Integer, Boolean> collectLikeInfo(List<Product> products, Integer userId) {
+        Map<Integer, Boolean> likeMap = new HashMap<>();
+        if (userId != null) {
+            List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            List<SaveProduct> savedProducts = saveProductRepository.findAllByUserIdAndProductIdIn(userId, productIds);
+            for (SaveProduct savedProduct : savedProducts) {
+                likeMap.put(savedProduct.getProductId(), true);
+            }
+        }
+        return likeMap;
+    }
+
+    private Map<Integer, ProductListDto> createProductDtoMap(
+            List<Product> products,
+            Map<Integer, Integer> reviewCountMap,
+            Map<Integer, OptionItem> optionItemMap,
+            Map<Integer, List<ProductFilterValueDto>> filterValuesMap,
+            Map<Integer, Boolean> likeMap,
+            Integer userId) {
+        
+        Map<Integer, ProductListDto> result = new HashMap<>();
+        
+        for (Product product : products) {
+            StoreInfo storeInfo = product.getStoreInfo();
+            
+            Integer reviewCount = reviewCountMap.getOrDefault(product.getId(), 0);
+            OptionItem optionItem = optionItemMap.get(product.getRepresentOptionItemId());
+            
+            Boolean isLike = userId != null ? likeMap.getOrDefault(product.getId(), false) : null;
+            List<ProductFilterValueDto> filterValues = filterValuesMap.getOrDefault(product.getId(), Collections.emptyList());
+            
+            ProductListDto dto = buildProductListDto(product, storeInfo, optionItem, reviewCount, isLike, filterValues);
+            result.put(product.getId(), dto);
+        }
+        
+        return result;
+    }
+
+    private ProductListDto buildProductListDto(
+            Product product,
+            StoreInfo storeInfo,
+            OptionItem optionItem,
+            Integer reviewCount,
+            Boolean isLike,
+            List<ProductFilterValueDto> filterValues) {
+        
+        return ProductListDto.builder()
+                .id(product.getId())
+                .state(product.getState())
+                .image(product.getImages() != null 
+                        ? product.getImages().substring(1, product.getImages().length() - 1).split(",")[0] 
+                        : null)
+                .originPrice(optionItem.getOriginPrice())
+                .isNeedTaxation(product.getNeedTaxation())
+                .discountPrice(optionItem.getDiscountPrice())
+                .title(product.getTitle())
+                .reviewCount(reviewCount)
+                .storeId(storeInfo.getStoreId())
+                .storeName(storeInfo.getName())
+                .parentCategoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
+                .filterValues(filterValues)
+                .minOrderPrice(product.getMinOrderPrice())
+                .deliverFeeType(product.getDeliverFeeType())
+                .storeImage(storeInfo.getProfileImage())
+                .isLike(isLike)
+                .build();
     }
 }

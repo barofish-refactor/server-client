@@ -18,7 +18,10 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -295,5 +298,27 @@ public class ReviewQueryService {
             return sb.toString();
         }
         return null;
+    }
+
+    public Map<Integer, Integer> countReviewsWithoutDeletedByProductIds(List<Integer> productIds) {
+        if (productIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        
+        List<Object[]> results = reviewRepository.countReviewsGroupByProductId(productIds, false);
+        
+        Map<Integer, Integer> countMap = new HashMap<>();
+        for (Object[] result : results) {
+            Integer productId = (Integer) result[0];
+            Long count = (Long) result[1];
+            countMap.put(productId, count.intValue());
+        }
+        
+        // 결과가 없는 상품 ID에 대해 0으로 초기화
+        for (Integer productId : productIds) {
+            countMap.putIfAbsent(productId, 0);
+        }
+        
+        return countMap;
     }
 }

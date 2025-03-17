@@ -7,6 +7,7 @@ import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.store.domain.ConditionalObject;
 import com.matsinger.barofishserver.domain.store.domain.Store;
+import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,13 +37,9 @@ public class Product implements ConditionalObject {
     @Column(name = "store_id", nullable = false)
     private int storeId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "store_id", updatable = false, insertable = false)
-//    private Store store;
-
-    // @Basic
-    // @Column(name = "category_id", nullable = false)
-    // private int categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", insertable = false, updatable = false)
+    private StoreInfo storeInfo;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
