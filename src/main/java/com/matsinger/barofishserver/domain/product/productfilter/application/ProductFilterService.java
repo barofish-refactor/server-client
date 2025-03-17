@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +56,7 @@ public class ProductFilterService {
         for (Integer productId : productIds) {
             List<ProductFilterValue> filterValues = filterValuesByProduct.getOrDefault(productId, Collections.emptyList());
             List<ProductFilterValueDto> filterValueDtos = filterValues.stream()
-                    .map(this::convert2Dto)
+                    .map(fv ->  convert2Dto(fv))
                     .collect(Collectors.toList());
             result.put(productId, filterValueDtos);
         }
@@ -66,7 +65,6 @@ public class ProductFilterService {
     }
 
     public ProductFilterValueDto convert2Dto(ProductFilterValue value) {
-
         CompareFilter filter = compareFilterQueryService.selectCompareFilter(value.getCompareFilterId());
         return ProductFilterValueDto.builder().compareFilterId(filter.getId()).compareFilterName(filter.getName())
                 .value(
