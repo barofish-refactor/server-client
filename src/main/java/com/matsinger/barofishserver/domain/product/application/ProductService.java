@@ -14,9 +14,7 @@ import com.matsinger.barofishserver.domain.inquiry.application.InquiryQueryServi
 import com.matsinger.barofishserver.domain.inquiry.domain.Inquiry;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.application.DifficultDeliverAddressQueryService;
 import com.matsinger.barofishserver.domain.product.domain.*;
-import com.matsinger.barofishserver.domain.product.dto.ExcelProductDto;
-import com.matsinger.barofishserver.domain.product.dto.ExcelProductDto2;
-import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
+import com.matsinger.barofishserver.domain.product.dto.*;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.option.dto.OptionDto;
 import com.matsinger.barofishserver.domain.product.option.repository.OptionRepository;
@@ -32,9 +30,12 @@ import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.review.application.ReviewQueryService;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.review.dto.ReviewDto;
+import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
 import com.matsinger.barofishserver.domain.review.dto.ReviewTotalStatistic;
+import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
 import com.matsinger.barofishserver.domain.review.repository.ReviewLikeRepository;
 import com.matsinger.barofishserver.domain.review.repository.ReviewRepository;
+import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import com.matsinger.barofishserver.domain.searchFilter.application.SearchFilterQueryService;
 import com.matsinger.barofishserver.domain.searchFilter.domain.ProductSearchFilterMap;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
@@ -46,11 +47,6 @@ import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.repository.StoreInfoRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.Common;
-import com.matsinger.barofishserver.domain.product.dto.ReviewProductInfoResponse;
-import com.matsinger.barofishserver.domain.product.dto.StoreReviewProductInfo;
-import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
-import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
-import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -61,14 +57,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -678,40 +667,18 @@ public class ProductService {
         productRepository.saveAll(products);
     }
 
-    public ReviewProductInfoResponse getReviewAndProductInfos(List<Integer> storeIds) {
-        Map<Integer, StoreReviewProductInfo> storeInfos = new HashMap<>();
-        
-        for (Integer storeId : storeIds) {
-
-            Integer reviewCount = reviewRepository.countByIsDeletedFalseAndStoreId(storeId);
-            Integer productCount = productRepository.countAllByStoreId(storeId);
-            List<ReviewEvaluationSummaryDto> productReviewEvaluations = reviewRepositoryImpl.getProductSumStoreReviewEvaluations(storeId);
-
-            StoreReviewProductInfo storeInfo = StoreReviewProductInfo.builder()
-                    .reviewStatistics(toReviewStatistic(productReviewEvaluations))
-                    .reviewCount(reviewCount)
-                    .productCount(productCount)
-                    .build();
-                    
-            storeInfos.put(storeId, storeInfo);
-        }
-        
-        return ReviewProductInfoResponse.builder()
-                .storeInfos(storeInfos)
-                .build();
-    }
-
     @NotNull
     private static List<ReviewStatistic> toReviewStatistic(List<ReviewEvaluationSummaryDto> productReviewEvaluations) {
         List<ReviewStatistic> reviewStatistics = productReviewEvaluations.stream()
-            .filter(evaluation -> evaluation.getEvaluationType() != null && evaluation.getEvaluationSum() != null)
-            .map(evaluation -> ReviewStatistic.builder()
-                .key(evaluation.getEvaluationType().toString())
-                .count(evaluation.getEvaluationSum().intValue())
-                .build())
-            .collect(Collectors.toList());
+                .filter(evaluation -> evaluation.getEvaluationType() != null && evaluation.getEvaluationSum() != null)
+                .map(evaluation -> ReviewStatistic.builder()
+                        .key(evaluation.getEvaluationType().toString())
+                        .count(evaluation.getEvaluationSum().intValue())
+                        .build())
+                .collect(Collectors.toList());
         return reviewStatistics;
     }
+
 
     public Map<Integer, ProductListDto> convertProductsToListDtosMap(List<Product> products, Integer userId) {
         if (products.isEmpty()) {
@@ -719,11 +686,16 @@ public class ProductService {
         }
 
         Map<Integer, Integer> reviewCountMap = collectReviewCounts(products);
-        Map<Integer, OptionItem> optionItemMap = collectOptionItems(products);
-        Map<Integer, List<ProductFilterValueDto>> filterValuesMap = collectFilterValues(products);
         Map<Integer, Boolean> likeMap = collectLikeInfo(products, userId);
 
-        return createProductDtoMap(products, reviewCountMap, optionItemMap, filterValuesMap, likeMap, userId);
+        return products.stream().collect(Collectors.toMap(
+            Product::getId,
+            product -> buildProductListDto(
+                product,
+                reviewCountMap.getOrDefault(product.getId(), 0),
+                likeMap.getOrDefault(product.getId(), false)
+            )
+        ));
     }
 
     private Map<Integer, Integer> collectReviewCounts(List<Product> products) {
@@ -731,21 +703,9 @@ public class ProductService {
         return reviewQueryService.countReviewsWithoutDeletedByProductIds(productIds);
     }
 
-    private Map<Integer, OptionItem> collectOptionItems(List<Product> products) {
-        List<Integer> optionItemIds = products.stream()
-                .map(Product::getRepresentOptionItemId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        return optionItemQueryService.selectOptionItemByIds(optionItemIds);
-    }
-
-    private Map<Integer, List<ProductFilterValueDto>> collectFilterValues(List<Product> products) {
-        List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
-        return productFilterService.selectProductFilterValuesByProductIds(productIds);
-    }
-
     private Map<Integer, Boolean> collectLikeInfo(List<Product> products, Integer userId) {
         Map<Integer, Boolean> likeMap = new HashMap<>();
+        
         if (userId != null) {
             List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
             List<SaveProduct> savedProducts = saveProductRepository.findAllByUserIdAndProductIdIn(userId, productIds);
@@ -756,58 +716,27 @@ public class ProductService {
         return likeMap;
     }
 
-    private Map<Integer, ProductListDto> createProductDtoMap(
-            List<Product> products,
-            Map<Integer, Integer> reviewCountMap,
-            Map<Integer, OptionItem> optionItemMap,
-            Map<Integer, List<ProductFilterValueDto>> filterValuesMap,
-            Map<Integer, Boolean> likeMap,
-            Integer userId) {
-        
-        Map<Integer, ProductListDto> result = new HashMap<>();
-        
-        for (Product product : products) {
-            StoreInfo storeInfo = product.getStoreInfo();
-            
-            Integer reviewCount = reviewCountMap.getOrDefault(product.getId(), 0);
-            OptionItem optionItem = optionItemMap.get(product.getRepresentOptionItemId());
-            
-            Boolean isLike = userId != null ? likeMap.getOrDefault(product.getId(), false) : null;
-            List<ProductFilterValueDto> filterValues = filterValuesMap.getOrDefault(product.getId(), Collections.emptyList());
-            
-            ProductListDto dto = buildProductListDto(product, storeInfo, optionItem, reviewCount, isLike, filterValues);
-            result.put(product.getId(), dto);
-        }
-        
-        return result;
-    }
-
     private ProductListDto buildProductListDto(
             Product product,
-            StoreInfo storeInfo,
-            OptionItem optionItem,
             Integer reviewCount,
-            Boolean isLike,
-            List<ProductFilterValueDto> filterValues) {
-        
+            Boolean isLike) {
+
         return ProductListDto.builder()
                 .id(product.getId())
                 .state(product.getState())
-                .image(product.getImages() != null 
-                        ? product.getImages().substring(1, product.getImages().length() - 1).split(",")[0] 
-                        : null)
-                .originPrice(optionItem.getOriginPrice())
+                .image(product.getFirstImageUrl())
+                .originPrice(product.getRepresentOptionItemOriginPrice())
                 .isNeedTaxation(product.getNeedTaxation())
-                .discountPrice(optionItem.getDiscountPrice())
+                .discountPrice(product.getRepresentOptionItemDiscountPrice())
                 .title(product.getTitle())
                 .reviewCount(reviewCount)
-                .storeId(storeInfo.getStoreId())
-                .storeName(storeInfo.getName())
-                .parentCategoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
-                .filterValues(filterValues)
+                .storeId(product.getStoreId())
+                .storeName(product.getStoreName())
+                .parentCategoryId(product.getCategoryId())
+                .filterValues(ProductFilterValueDto.listFrom(product.getFilterValues()))
                 .minOrderPrice(product.getMinOrderPrice())
                 .deliverFeeType(product.getDeliverFeeType())
-                .storeImage(storeInfo.getProfileImage())
+                .storeImage(product.getStoreImageUrl())
                 .isLike(isLike)
                 .build();
     }
