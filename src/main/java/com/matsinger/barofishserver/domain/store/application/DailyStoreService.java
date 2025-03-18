@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +29,7 @@ public class DailyStoreService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refreshDailyStores() {
-        Optional<DailyStore> latestStore = dailyStoreRepository.findLatestActive();
-        if (latestStore.isPresent()) {
+        if (dailyStoreExists()) {
             return;
         }
 
@@ -50,6 +48,15 @@ public class DailyStoreService {
         dailyStoreRepository.saveAll(newStores);
         em.flush();
         em.clear();
+    }
+
+    private boolean dailyStoreExists() {
+        Optional<DailyStore> latestStore = dailyStoreRepository.findLatestActive();
+        if (latestStore.isPresent()) {
+            DailyStore dailyStore = latestStore.get();
+            return dailyStore.isToday(LocalDateTime.now());
+        }
+        return false;
     }
 
     public Page<DailyStore> getTodayReliableStores(Pageable pageable) {
