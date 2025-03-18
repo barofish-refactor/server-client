@@ -71,7 +71,6 @@ public class ProductService {
     private final SaveProductRepository saveProductRepository;
     private final ProductSearchFilterMapRepository productSearchFilterMapRepository;
 
-    private final CategoryFilterService categoryFilterService;
     private final ProductFilterService productFilterService;
     private final StoreService storeService;
     private final InquiryQueryService inquiryQueryService;
@@ -85,21 +84,11 @@ public class ProductService {
     private final AddressQueryService addressQueryService;
     private final Common utils;
     private final ReviewLikeRepository reviewLikeRepository;
-    private final ReviewRepositoryImpl reviewRepositoryImpl;
-    private final OptionItemQueryService optionItemQueryService;
+    private final ProductSummaryService productSummaryService;
 
     public List<Product> selectProductListWithIds(List<Integer> ids) {
         return productRepository.findAllByIdIn(ids);
     }
-
-    public List<Product> selectProductList() {
-        return productRepository.findAll();
-    }
-
-    public List<Integer> testQuery(List<Integer> ids) {
-        return productRepository.testQuery(ids);
-    }
-
 
     @Transactional
     public void deleteOption(Integer optionId) {
@@ -124,18 +113,6 @@ public class ProductService {
         OptionItem optionItem = selectOptionItem(optionItemId);
         optionItem.setState(OptionItemState.DELETED);
         optionItemRepository.save(optionItem);
-    }
-
-    @Transactional
-    public void deleteOptions(Integer productId) {
-        List<Integer>
-                optionIds =
-                optionRepository.findAllByProductIdAndState(productId,
-                        OptionState.ACTIVE).stream().map(Option::getId).toList();
-        for (Integer id : optionIds) {
-            deleteOptionItems(id);
-        }
-        optionRepository.deleteAllByProductId(productId);
     }
 
     public OptionItem selectOptionItem(Integer optionItemId) {
@@ -251,29 +228,6 @@ public class ProductService {
 
     public Page<Product> selectProductByAdmin(Pageable pageRequest, Specification<Product> spec) {
         return productRepository.findAll(spec, pageRequest);
-    }
-
-    public ProductListDto createProductListDtos(Integer id) {
-        Product findProduct = productRepository.findById(id).orElseThrow(() -> {
-            throw new BusinessException("상품 정보를 찾을 수 없습니다.");
-        });
-        int productId = findProduct.getId();
-        String productImages = findProduct.getImages();
-
-        StoreInfo storeInfo = storeInfoRepository.findById(id).orElseThrow(() -> new Error("상점 정보를 찾을 수 없습니다."));
-        Integer reviewCount = reviewRepository.countAllByProductId(productId);
-        OptionItem
-                optionItem =
-                optionItemRepository.findById(findProduct.getRepresentOptionItemId()).orElseThrow(() -> new Error(
-                        "옵션 아이템 정보를 찾을 수 없습니다."));
-
-        List<ProductFilterValue> productFilters = productFilterRepository.findAllByProductId(productId);
-        List<ProductFilterValueDto> filterValueDtos = getProductFilterValueDtos(productFilters);
-
-        return ProductListDto.builder().id(productId).state(findProduct.getState()).image(productImages.substring(1,
-                productImages.length() - 1).split(",")[0]).originPrice(optionItem.getOriginPrice()).discountPrice(
-                optionItem.getDiscountPrice()).title(findProduct.getTitle()).reviewCount(reviewCount).storeId(storeInfo.getStoreId()).storeName(
-                storeInfo.getName()).parentCategoryId(findProduct.getCategoryId()).filterValues(filterValueDtos).build();
     }
 
     @NotNull
@@ -474,10 +428,6 @@ public class ProductService {
         return optionRepository.save(option);
     }
 
-    public List<OptionItem> updateOptionItemList(List<OptionItem> optionItems) {
-        return optionItemRepository.saveAll(optionItems);
-    }
-
     public Page<Product> selectNewerProductList(Integer page,
                                                 Integer take,
                                                 List<Integer> categoryIds,
@@ -545,10 +495,6 @@ public class ProductService {
     public Integer checkLikeProduct(Integer productId, Integer userId) {
         if (userId == null) return 0;
         return productRepository.checkLikeProduct(productId, userId);
-    }
-
-    public boolean checkExistProductSearchFilterMap(Integer productId, Integer fieldId) {
-        return productSearchFilterMapRepository.existsByFieldIdAndProductId(fieldId, productId);
     }
 
     public void addProductSearchFilters(List<ProductSearchFilterMap> filterMaps) {
@@ -667,40 +613,27 @@ public class ProductService {
         productRepository.saveAll(products);
     }
 
-    @NotNull
-    private static List<ReviewStatistic> toReviewStatistic(List<ReviewEvaluationSummaryDto> productReviewEvaluations) {
-        List<ReviewStatistic> reviewStatistics = productReviewEvaluations.stream()
-                .filter(evaluation -> evaluation.getEvaluationType() != null && evaluation.getEvaluationSum() != null)
-                .map(evaluation -> ReviewStatistic.builder()
-                        .key(evaluation.getEvaluationType().toString())
-                        .count(evaluation.getEvaluationSum().intValue())
-                        .build())
-                .collect(Collectors.toList());
-        return reviewStatistics;
-    }
-
-
     public Map<Integer, ProductListDto> convertProductsToListDtosMap(List<Product> products, Integer userId) {
         if (products.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<Integer, Integer> reviewCountMap = collectReviewCounts(products);
+        Map<Integer, ProductSummary> productSummaryMap = collectReviewCounts(products);
         Map<Integer, Boolean> likeMap = collectLikeInfo(products, userId);
 
         return products.stream().collect(Collectors.toMap(
             Product::getId,
             product -> buildProductListDto(
                 product,
-                reviewCountMap.getOrDefault(product.getId(), 0),
+                productSummaryMap.get(product.getId()),
                 likeMap.getOrDefault(product.getId(), false)
             )
         ));
     }
 
-    private Map<Integer, Integer> collectReviewCounts(List<Product> products) {
+    private Map<Integer, ProductSummary> collectReviewCounts(List<Product> products) {
         List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
-        return reviewQueryService.countReviewsWithoutDeletedByProductIds(productIds);
+        return productSummaryService.countReviewsWithoutDeletedByProductIds(productIds);
     }
 
     private Map<Integer, Boolean> collectLikeInfo(List<Product> products, Integer userId) {
@@ -718,8 +651,10 @@ public class ProductService {
 
     private ProductListDto buildProductListDto(
             Product product,
-            Integer reviewCount,
+            ProductSummary productSummary,
             Boolean isLike) {
+
+        Integer reviewCount = productSummary != null ? productSummary.getReviewCnt() : 0;
 
         return ProductListDto.builder()
                 .id(product.getId())

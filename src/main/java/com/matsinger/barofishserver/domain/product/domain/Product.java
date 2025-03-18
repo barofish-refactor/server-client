@@ -145,6 +145,9 @@ public class Product implements ConditionalObject {
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
     private List<ProductFilterValue> filterValues;
 
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProductSummary productSummary;
+
     public void setPointRate(Float pointRate) {
         this.pointRate = pointRate / 100;
     }
