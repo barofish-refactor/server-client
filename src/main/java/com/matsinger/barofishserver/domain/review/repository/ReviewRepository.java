@@ -77,4 +77,7 @@ public interface ReviewRepository extends JpaRepository<Review, Integer>, JpaSpe
     Integer countAllByProductIdAndIsDeleted(Integer productId, boolean isDeleted);
 
     boolean existsByUserIdAndOrderProductInfoId(Integer userId, int orderProductInfoId);
+
+    @Query("SELECT r.product.id, COUNT(r) FROM Review r WHERE r.product.id IN :productIds AND r.isDeleted = :deleted GROUP BY r.product.id")
+    List<Object[]> countReviewsGroupByProductId(@Param("productIds") List<Integer> productIds, @Param("deleted") Boolean deleted);
 }

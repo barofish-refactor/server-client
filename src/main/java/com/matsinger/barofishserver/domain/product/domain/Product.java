@@ -4,14 +4,15 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
+import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
+import com.matsinger.barofishserver.domain.product.productfilter.domain.ProductFilterValue;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.store.domain.ConditionalObject;
-import com.matsinger.barofishserver.domain.store.domain.Store;
+import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
-import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -36,13 +37,9 @@ public class Product implements ConditionalObject {
     @Column(name = "store_id", nullable = false)
     private int storeId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "store_id", updatable = false, insertable = false)
-//    private Store store;
-
-    // @Basic
-    // @Column(name = "category_id", nullable = false)
-    // private int categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", insertable = false, updatable = false)
+    private StoreInfo storeInfo;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -87,6 +84,10 @@ public class Product implements ConditionalObject {
     @Basic
     @Column(name = "represent_item_id", nullable = true)
     private Integer representOptionItemId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "represent_item_id", insertable = false, updatable = false)
+    private OptionItem representOptionItem;
 
     @Basic
     @Column(name = "deliver_box_per_amount", nullable = true)
@@ -139,6 +140,13 @@ public class Product implements ConditionalObject {
 
     @Column(name = "recommended_cooking_way", length = 10)
     private String recommendedCookingWay;
+
+    @OneToMany
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    private List<ProductFilterValue> filterValues;
+
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProductSummary productSummary;
 
     public void setPointRate(Float pointRate) {
         this.pointRate = pointRate / 100;
@@ -343,5 +351,28 @@ public class Product implements ConditionalObject {
 
     public boolean needTaxation() {
         return this.needTaxation == true;
+    }
+
+    public String getFirstImageUrl() {
+        if (this.images == null) {
+            return null;
+        }
+        return this.images.substring(1, this.images.length() - 1).split(",")[0];
+    }
+
+    public Integer getRepresentOptionItemOriginPrice() {
+        return this.representOptionItem != null ? this.representOptionItem.getOriginPrice() : null;
+    }
+
+    public Integer getRepresentOptionItemDiscountPrice() {
+        return this.representOptionItem != null ? this.representOptionItem.getDiscountPrice() : null;
+    }
+
+    public String getStoreName() {
+        return this.storeInfo != null ? this.storeInfo.getName() : null;
+    }
+
+    public String getStoreImageUrl() {
+        return this.storeInfo != null ? this.storeInfo.getProfileImage() : null;
     }
 }

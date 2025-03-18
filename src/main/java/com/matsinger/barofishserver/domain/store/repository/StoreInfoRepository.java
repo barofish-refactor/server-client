@@ -15,6 +15,12 @@ import java.util.Optional;
 public interface StoreInfoRepository extends JpaRepository<StoreInfo, Integer> {
     Optional<StoreInfo> findByName(String name);
 
+    /**
+     * 여러 스토어 ID에 해당하는 스토어 정보를 조회합니다.
+     *
+     * @param storeIds 스토어 ID 목록
+     * @return 스토어 정보 목록
+     */
     List<StoreInfo> findAllByStoreIdIn(List<Integer> storeIds);
 
     @Query(value = "SELECT si.*\n" +

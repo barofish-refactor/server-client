@@ -12,4 +12,6 @@ public interface ProductFilterRepository extends JpaRepository<ProductFilterValu
     List<ProductFilterValue> findAllByProductId(Integer productId);
 
     void deleteAllByProductId(Integer productId);
+
+    List<ProductFilterValue> findAllByProductIdIn(List<Integer> productIds);
 }

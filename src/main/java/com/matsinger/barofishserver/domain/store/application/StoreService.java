@@ -24,8 +24,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -232,5 +236,18 @@ public class StoreService {
 
     public List<Store> selectReliableStore() {
         return storeRepository.findAllByStateAndStoreInfo_IsReliableTrue(StoreState.ACTIVE);
+    }
+
+    public Map<Integer, StoreInfo> selectStoreInfoByIds(List<Integer> storeIds) {
+        if (storeIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        
+        List<StoreInfo> storeInfos = storeInfoRepository.findAllByStoreIdIn(storeIds);
+        return storeInfos.stream()
+                .collect(Collectors.toMap(
+                        StoreInfo::getStoreId,
+                        storeInfo -> storeInfo
+                ));
     }
 }

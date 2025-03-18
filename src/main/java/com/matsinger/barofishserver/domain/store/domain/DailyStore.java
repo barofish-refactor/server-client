@@ -4,7 +4,9 @@ import com.matsinger.barofishserver.global.config.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "daily_store")
@@ -37,5 +39,11 @@ public class DailyStore extends BaseTimeEntity {
             .storeId(store.getId())
             .deleted(false)
             .build();
+    }
+    
+    public boolean isToday(LocalDateTime today) {
+        LocalDate todayDate = today.toLocalDate();
+        LocalDate createdDate = getCreatedAt().toLocalDateTime().toLocalDate();
+        return todayDate.equals(createdDate);
     }
 }

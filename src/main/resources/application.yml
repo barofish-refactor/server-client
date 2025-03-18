@@ -13,7 +13,7 @@ spring:
       hibernate:
         ddl-auto: none
         format_sql: true
-        default_batch_fetch_size: 10
+        default_batch_fetch_size: 150
     show-sql: true
 #    open-in-view: false
 
