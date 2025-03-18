@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -23,5 +26,19 @@ public class OptionItemQueryService {
 
     public List<OptionItem> findByIds(List<Integer> optionItemIds) {
         return optionItemRepository.findAllById(optionItemIds);
+    }
+
+    public Map<Integer, OptionItem> selectOptionItemByIds(List<Integer> optionItemIds) {
+        if (optionItemIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<OptionItem> optionItems = optionItemRepository.findAllByIdIn(optionItemIds);
+
+        return optionItems.stream()
+                .collect(Collectors.toMap(
+                        optionItem -> optionItem.getId(),
+                        optionItem -> optionItem
+                ));
     }
 }

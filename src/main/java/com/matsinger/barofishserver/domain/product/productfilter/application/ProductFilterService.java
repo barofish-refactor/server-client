@@ -11,8 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -38,13 +42,33 @@ public class ProductFilterService {
         return productFilterRepository.findAllByProductId(productId).stream().map(this::convert2Dto).toList();
     }
 
-    public ProductFilterValueDto convert2Dto(ProductFilterValue value) {
+    public Map<Integer, List<ProductFilterValueDto>> selectProductFilterValuesByProductIds(List<Integer> productIds) {
+        if (productIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        
+        List<ProductFilterValue> allFilterValues = productFilterRepository.findAllByProductIdIn(productIds);
 
+        Map<Integer, List<ProductFilterValue>> filterValuesByProduct = allFilterValues.stream()
+                .collect(Collectors.groupingBy(ProductFilterValue::getProductId));
+
+        Map<Integer, List<ProductFilterValueDto>> result = new HashMap<>();
+        for (Integer productId : productIds) {
+            List<ProductFilterValue> filterValues = filterValuesByProduct.getOrDefault(productId, Collections.emptyList());
+            List<ProductFilterValueDto> filterValueDtos = filterValues.stream()
+                    .map(fv ->  convert2Dto(fv))
+                    .collect(Collectors.toList());
+            result.put(productId, filterValueDtos);
+        }
+
+        return result;
+    }
+
+    public ProductFilterValueDto convert2Dto(ProductFilterValue value) {
         CompareFilter filter = compareFilterQueryService.selectCompareFilter(value.getCompareFilterId());
         return ProductFilterValueDto.builder().compareFilterId(filter.getId()).compareFilterName(filter.getName())
                 .value(
                         value.getValue())
                 .build();
     }
-
 }

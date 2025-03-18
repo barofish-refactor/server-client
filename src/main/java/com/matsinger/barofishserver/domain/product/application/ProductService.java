@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.address.domain.Address;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketProductOptionRepository;
 import com.matsinger.barofishserver.domain.category.dto.CategoryDto;
 import com.matsinger.barofishserver.domain.category.filter.application.CategoryFilterService;
+import com.matsinger.barofishserver.domain.compare.domain.SaveProduct;
 import com.matsinger.barofishserver.domain.compare.domain.SaveProductId;
 import com.matsinger.barofishserver.domain.compare.filter.domain.CompareFilter;
 import com.matsinger.barofishserver.domain.compare.filter.repository.CompareFilterRepository;
@@ -13,12 +14,11 @@ import com.matsinger.barofishserver.domain.inquiry.application.InquiryQueryServi
 import com.matsinger.barofishserver.domain.inquiry.domain.Inquiry;
 import com.matsinger.barofishserver.domain.product.difficultDeliverAddress.application.DifficultDeliverAddressQueryService;
 import com.matsinger.barofishserver.domain.product.domain.*;
-import com.matsinger.barofishserver.domain.product.dto.ExcelProductDto;
-import com.matsinger.barofishserver.domain.product.dto.ExcelProductDto2;
-import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
+import com.matsinger.barofishserver.domain.product.dto.*;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.option.dto.OptionDto;
 import com.matsinger.barofishserver.domain.product.option.repository.OptionRepository;
+import com.matsinger.barofishserver.domain.product.optionitem.application.OptionItemQueryService;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.domain.product.optionitem.dto.OptionItemDto;
 import com.matsinger.barofishserver.domain.product.optionitem.repository.OptionItemRepository;
@@ -30,9 +30,12 @@ import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.review.application.ReviewQueryService;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.review.dto.ReviewDto;
+import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
 import com.matsinger.barofishserver.domain.review.dto.ReviewTotalStatistic;
+import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
 import com.matsinger.barofishserver.domain.review.repository.ReviewLikeRepository;
 import com.matsinger.barofishserver.domain.review.repository.ReviewRepository;
+import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import com.matsinger.barofishserver.domain.searchFilter.application.SearchFilterQueryService;
 import com.matsinger.barofishserver.domain.searchFilter.domain.ProductSearchFilterMap;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
@@ -44,11 +47,6 @@ import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import com.matsinger.barofishserver.domain.store.repository.StoreInfoRepository;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import com.matsinger.barofishserver.utils.Common;
-import com.matsinger.barofishserver.domain.product.dto.ReviewProductInfoResponse;
-import com.matsinger.barofishserver.domain.product.dto.StoreReviewProductInfo;
-import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
-import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
-import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -59,11 +57,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -77,7 +71,6 @@ public class ProductService {
     private final SaveProductRepository saveProductRepository;
     private final ProductSearchFilterMapRepository productSearchFilterMapRepository;
 
-    private final CategoryFilterService categoryFilterService;
     private final ProductFilterService productFilterService;
     private final StoreService storeService;
     private final InquiryQueryService inquiryQueryService;
@@ -91,20 +84,11 @@ public class ProductService {
     private final AddressQueryService addressQueryService;
     private final Common utils;
     private final ReviewLikeRepository reviewLikeRepository;
-    private final ReviewRepositoryImpl reviewRepositoryImpl;
+    private final ProductSummaryService productSummaryService;
 
     public List<Product> selectProductListWithIds(List<Integer> ids) {
         return productRepository.findAllByIdIn(ids);
     }
-
-    public List<Product> selectProductList() {
-        return productRepository.findAll();
-    }
-
-    public List<Integer> testQuery(List<Integer> ids) {
-        return productRepository.testQuery(ids);
-    }
-
 
     @Transactional
     public void deleteOption(Integer optionId) {
@@ -129,18 +113,6 @@ public class ProductService {
         OptionItem optionItem = selectOptionItem(optionItemId);
         optionItem.setState(OptionItemState.DELETED);
         optionItemRepository.save(optionItem);
-    }
-
-    @Transactional
-    public void deleteOptions(Integer productId) {
-        List<Integer>
-                optionIds =
-                optionRepository.findAllByProductIdAndState(productId,
-                        OptionState.ACTIVE).stream().map(Option::getId).toList();
-        for (Integer id : optionIds) {
-            deleteOptionItems(id);
-        }
-        optionRepository.deleteAllByProductId(productId);
     }
 
     public OptionItem selectOptionItem(Integer optionItemId) {
@@ -256,29 +228,6 @@ public class ProductService {
 
     public Page<Product> selectProductByAdmin(Pageable pageRequest, Specification<Product> spec) {
         return productRepository.findAll(spec, pageRequest);
-    }
-
-    public ProductListDto createProductListDtos(Integer id) {
-        Product findProduct = productRepository.findById(id).orElseThrow(() -> {
-            throw new BusinessException("상품 정보를 찾을 수 없습니다.");
-        });
-        int productId = findProduct.getId();
-        String productImages = findProduct.getImages();
-
-        StoreInfo storeInfo = storeInfoRepository.findById(id).orElseThrow(() -> new Error("상점 정보를 찾을 수 없습니다."));
-        Integer reviewCount = reviewRepository.countAllByProductId(productId);
-        OptionItem
-                optionItem =
-                optionItemRepository.findById(findProduct.getRepresentOptionItemId()).orElseThrow(() -> new Error(
-                        "옵션 아이템 정보를 찾을 수 없습니다."));
-
-        List<ProductFilterValue> productFilters = productFilterRepository.findAllByProductId(productId);
-        List<ProductFilterValueDto> filterValueDtos = getProductFilterValueDtos(productFilters);
-
-        return ProductListDto.builder().id(productId).state(findProduct.getState()).image(productImages.substring(1,
-                productImages.length() - 1).split(",")[0]).originPrice(optionItem.getOriginPrice()).discountPrice(
-                optionItem.getDiscountPrice()).title(findProduct.getTitle()).reviewCount(reviewCount).storeId(storeInfo.getStoreId()).storeName(
-                storeInfo.getName()).parentCategoryId(findProduct.getCategoryId()).filterValues(filterValueDtos).build();
     }
 
     @NotNull
@@ -479,10 +428,6 @@ public class ProductService {
         return optionRepository.save(option);
     }
 
-    public List<OptionItem> updateOptionItemList(List<OptionItem> optionItems) {
-        return optionItemRepository.saveAll(optionItems);
-    }
-
     public Page<Product> selectNewerProductList(Integer page,
                                                 Integer take,
                                                 List<Integer> categoryIds,
@@ -550,10 +495,6 @@ public class ProductService {
     public Integer checkLikeProduct(Integer productId, Integer userId) {
         if (userId == null) return 0;
         return productRepository.checkLikeProduct(productId, userId);
-    }
-
-    public boolean checkExistProductSearchFilterMap(Integer productId, Integer fieldId) {
-        return productSearchFilterMapRepository.existsByFieldIdAndProductId(fieldId, productId);
     }
 
     public void addProductSearchFilters(List<ProductSearchFilterMap> filterMaps) {
@@ -672,38 +613,66 @@ public class ProductService {
         productRepository.saveAll(products);
     }
 
-    public ReviewProductInfoResponse getReviewAndProductInfos(List<Integer> storeIds) {
-        Map<Integer, StoreReviewProductInfo> storeInfos = new HashMap<>();
-        
-        for (Integer storeId : storeIds) {
-
-            Integer reviewCount = reviewRepository.countByIsDeletedFalseAndStoreId(storeId);
-            Integer productCount = productRepository.countAllByStoreId(storeId);
-            List<ReviewEvaluationSummaryDto> productReviewEvaluations = reviewRepositoryImpl.getProductSumStoreReviewEvaluations(storeId);
-
-            StoreReviewProductInfo storeInfo = StoreReviewProductInfo.builder()
-                    .reviewStatistics(toReviewStatistic(productReviewEvaluations))
-                    .reviewCount(reviewCount)
-                    .productCount(productCount)
-                    .build();
-                    
-            storeInfos.put(storeId, storeInfo);
+    public Map<Integer, ProductListDto> convertProductsToListDtosMap(List<Product> products, Integer userId) {
+        if (products.isEmpty()) {
+            return Collections.emptyMap();
         }
-        
-        return ReviewProductInfoResponse.builder()
-                .storeInfos(storeInfos)
-                .build();
+
+        Map<Integer, ProductSummary> productSummaryMap = collectReviewCounts(products);
+        Map<Integer, Boolean> likeMap = collectLikeInfo(products, userId);
+
+        return products.stream().collect(Collectors.toMap(
+            Product::getId,
+            product -> buildProductListDto(
+                product,
+                productSummaryMap.get(product.getId()),
+                likeMap.getOrDefault(product.getId(), false)
+            )
+        ));
     }
 
-    @NotNull
-    private static List<ReviewStatistic> toReviewStatistic(List<ReviewEvaluationSummaryDto> productReviewEvaluations) {
-        List<ReviewStatistic> reviewStatistics = productReviewEvaluations.stream()
-            .filter(evaluation -> evaluation.getEvaluationType() != null && evaluation.getEvaluationSum() != null)
-            .map(evaluation -> ReviewStatistic.builder()
-                .key(evaluation.getEvaluationType().toString())
-                .count(evaluation.getEvaluationSum().intValue())
-                .build())
-            .collect(Collectors.toList());
-        return reviewStatistics;
+    private Map<Integer, ProductSummary> collectReviewCounts(List<Product> products) {
+        List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+        return productSummaryService.countReviewsWithoutDeletedByProductIds(productIds);
+    }
+
+    private Map<Integer, Boolean> collectLikeInfo(List<Product> products, Integer userId) {
+        Map<Integer, Boolean> likeMap = new HashMap<>();
+        
+        if (userId != null) {
+            List<Integer> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            List<SaveProduct> savedProducts = saveProductRepository.findAllByUserIdAndProductIdIn(userId, productIds);
+            for (SaveProduct savedProduct : savedProducts) {
+                likeMap.put(savedProduct.getProductId(), true);
+            }
+        }
+        return likeMap;
+    }
+
+    private ProductListDto buildProductListDto(
+            Product product,
+            ProductSummary productSummary,
+            Boolean isLike) {
+
+        Integer reviewCount = productSummary != null ? productSummary.getReviewCnt() : 0;
+
+        return ProductListDto.builder()
+                .id(product.getId())
+                .state(product.getState())
+                .image(product.getFirstImageUrl())
+                .originPrice(product.getRepresentOptionItemOriginPrice())
+                .isNeedTaxation(product.getNeedTaxation())
+                .discountPrice(product.getRepresentOptionItemDiscountPrice())
+                .title(product.getTitle())
+                .reviewCount(reviewCount)
+                .storeId(product.getStoreId())
+                .storeName(product.getStoreName())
+                .parentCategoryId(product.getCategoryId())
+                .filterValues(ProductFilterValueDto.listFrom(product.getFilterValues()))
+                .minOrderPrice(product.getMinOrderPrice())
+                .deliverFeeType(product.getDeliverFeeType())
+                .storeImage(product.getStoreImageUrl())
+                .isLike(isLike)
+                .build();
     }
 }

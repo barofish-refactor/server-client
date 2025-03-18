@@ -65,20 +65,13 @@ public class MainController {
         CustomResponse<List<CurationDto>> res = new CustomResponse<>();
 
         Integer userId = null;
-        jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ALLOW), auth);
-
-        List<Curation> curations = curationQueryService.selectCurationState(CurationState.ACTIVE);
-        List<CurationDto> curationDtos = new ArrayList<>();
-        for (Curation curation : curations) {
-            List<Product>
-                    products =
-                    curationQueryService.selectCurationProducts(curation.getId(), PageRequest.of(0, 10));
-            CurationDto curationDto = curation.convert2Dto();
-
-            Integer finalUserId = userId;
-            curationDto.setProducts(products.stream().map(v -> productService.convert2ListDto(v, finalUserId)).toList());
-            curationDtos.add(curationDto);
+        TokenInfo tokenInfo = jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ALLOW), auth);
+        if (tokenInfo != null && tokenInfo.getType() == TokenAuthType.USER) {
+            userId = tokenInfo.getId();
         }
+
+        List<CurationDto> curationDtos = curationQueryService.getCurations(userId);
+        
         res.setData(Optional.of(curationDtos));
         return ResponseEntity.ok(res);
     }
