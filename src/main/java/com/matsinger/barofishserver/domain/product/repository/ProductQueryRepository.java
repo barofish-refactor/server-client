@@ -48,10 +48,10 @@ public class ProductQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final SearchFilterFieldRepository searchFilterFieldRepository;
 
-    public PageImpl<ProductListDto> selectNewerProducts(PageRequest pageRequest, List<Integer> categoryIds, List<Integer> filterFieldsIds) {
+    public PageImpl<ProductListDto> selectNewerProducts(PageRequest pageRequest, List<Integer> filterFieldsIds) {
         OrderSpecifier[] orderSpecifiers = createNewerSpecifier();
 
-        Integer count = countNewerProducts(categoryIds, filterFieldsIds);
+        Integer count = countNewerProducts(null, filterFieldsIds);
 
         List<ProductListDto> inquiryData = queryFactory
                 .select(Projections.fields(
@@ -61,22 +61,19 @@ public class ProductQueryRepository {
                         product.images.as("image"),
                         product.title.as("title"),
                         product.needTaxation.as("isNeedTaxation"),
+                        product.minOrderPrice.as("minOrderPrice"),
+                        product.deliverFeeType.as("delieverFeeType"),
                         optionItem.discountPrice.as("discountPrice"),
                         optionItem.originPrice.as("originPrice"),
                         storeInfo.storeId.as("storeId"),
                         storeInfo.name.as("storeName"),
-                        product.minOrderPrice.as("minOrderPrice"),
-                        storeInfo.profileImage.as("storeImage"),
-                        product.deliverFeeType.as("delieverFeeType"),
-                        category.parentCategory.id.as("parentCategoryId")
+                        storeInfo.profileImage.as("storeImage")
                 ))
                 .from(product)
                 .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .leftJoin(category).on(category.id.eq(product.category.id))
                 .where(product.state.eq(ProductState.ACTIVE),
                         isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds)
                 )
                 .groupBy(product.id)
@@ -111,9 +108,8 @@ public class ProductQueryRepository {
     }
 
     public PageImpl<ProductListDto> selectPopularProducts(PageRequest pageRequest,
-                                                          List<Integer> categoryIds,
-                                               List<Integer> filterFieldsIds) {
-        int count = countPopularProducts(categoryIds, filterFieldsIds);
+                                                          List<Integer> filterFieldsIds) {
+        int count = countPopularProducts(null, filterFieldsIds);
 
         OrderSpecifier[] orderSpecifiers = createPopularOrderSpecifier();
 
@@ -125,24 +121,21 @@ public class ProductQueryRepository {
                         product.images.as("image"),
                         product.title.as("title"),
                         product.needTaxation.as("isNeedTaxation"),
+                        product.deliverFeeType.as("delieverFeeType"),
+                        product.minOrderPrice.as("minOrderPrice"),
                         optionItem.discountPrice.as("discountPrice"),
                         optionItem.originPrice.as("originPrice"),
                         storeInfo.storeId.as("storeId"),
                         storeInfo.name.as("storeName"),
-                        product.minOrderPrice.as("minOrderPrice"),
-                        storeInfo.profileImage.as("storeImage"),
-                        product.deliverFeeType.as("delieverFeeType"),
-                        category.parentCategory.id.as("parentCategoryId")
+                        storeInfo.profileImage.as("storeImage")
                 ))
                 .from(product)
                 .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .leftJoin(category).on(category.id.eq(product.category.id))
                 .leftJoin(review).on(product.id.eq(review.productId))
                 .where(product.state.eq(ProductState.ACTIVE),
                         review.isDeleted.eq(false),
                         isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds)
                 )
                 .groupBy(product.id)
@@ -184,9 +177,8 @@ public class ProductQueryRepository {
     }
 
     public PageImpl<ProductListDto> selectDiscountProducts(PageRequest pageRequest,
-                                                           List<Integer> categoryIds,
                                                            List<Integer> filterFieldsIds) {
-        int count = countDiscountProducts(categoryIds, filterFieldsIds);
+        int count = countDiscountProducts(null, filterFieldsIds);
 
         OrderSpecifier[] orderSpecifiers = createDiscountOrderSpecifier();
 
@@ -198,22 +190,19 @@ public class ProductQueryRepository {
                         product.images.as("image"),
                         product.title.as("title"),
                         product.needTaxation.as("isNeedTaxation"),
+                        product.deliverFeeType.as("delieverFeeType"),
+                        product.minOrderPrice.as("minOrderPrice"),
                         optionItem.discountPrice.as("discountPrice"),
                         optionItem.originPrice.as("originPrice"),
                         storeInfo.storeId.as("storeId"),
                         storeInfo.name.as("storeName"),
-                        product.minOrderPrice.as("minOrderPrice"),
-                        storeInfo.profileImage.as("storeImage"),
-                        product.deliverFeeType.as("delieverFeeType"),
-                        category.parentCategory.id.as("parentCategoryId")
+                        storeInfo.profileImage.as("storeImage")
                 ))
                 .from(product)
                 .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .leftJoin(category).on(category.id.eq(product.category.id))
                 .where(product.state.eq(ProductState.ACTIVE),
                         isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds),
                         isDiscountApplied()
                 )

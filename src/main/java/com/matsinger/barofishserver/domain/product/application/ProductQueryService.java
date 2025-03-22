@@ -200,20 +200,20 @@ public class ProductQueryService {
 
     public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
                                                         PageRequest pageRequest,
-                                                        List<Integer> filterFieldsIds,
-                                                        List<Integer> categoryIds) {
+                                                        List<Integer> filterFieldsIds) {
         PageImpl<ProductListDto> productDtos = null;
+
         if (topBarId == 1) {
             productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, categoryIds, filterFieldsIds);
+                    pageRequest, filterFieldsIds);
         }
         if (topBarId == 2) {
             productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, categoryIds, filterFieldsIds);
+                    pageRequest, filterFieldsIds);
         }
         if (topBarId == 3) {
             productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, categoryIds, filterFieldsIds);
+                    pageRequest, filterFieldsIds);
         }
 
         for (ProductListDto productDto : productDtos) {

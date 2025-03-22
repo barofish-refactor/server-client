@@ -69,8 +69,7 @@ public class TopBarControllerV2 {
         Page<ProductListDto> productListDtos = productQueryService.selectTopBarProductList(
                 id,
                 PageRequest.of(page - 1, take),
-                utils.str2IntList(filterFieldIds),
-                null);
+                utils.str2IntList(filterFieldIds));
         res.setIsSuccess(true);
         res.setData(Optional.of(productListDtos));
 
