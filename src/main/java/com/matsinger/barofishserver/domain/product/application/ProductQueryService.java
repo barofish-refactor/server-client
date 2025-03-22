@@ -111,7 +111,6 @@ public class ProductQueryService {
             List<Integer> filterFieldIds,
             Integer curationId,
             String keyword,
-            List<Integer> productIds,
             Integer storeId) {
 
         return productQueryRepository.countProducts(
@@ -119,7 +118,7 @@ public class ProductQueryService {
                 filterFieldIds,
                 curationId,
                 keyword,
-                productIds,
+                null,
                 storeId);
     }
 
@@ -206,24 +205,15 @@ public class ProductQueryService {
         PageImpl<ProductListDto> productDtos = null;
         if (topBarId == 1) {
             productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, categoryIds, filterFieldsIds);
         }
         if (topBarId == 2) {
             productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, categoryIds, filterFieldsIds);
         }
         if (topBarId == 3) {
             productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, categoryIds, filterFieldsIds);
         }
 
         for (ProductListDto productDto : productDtos) {
@@ -239,22 +229,13 @@ public class ProductQueryService {
                                       List<Integer> filterFieldsIds,
                                       List<Integer> categoryIds) {
         if (topBarId == 1) {
-            return productQueryRepository.countNewerProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsIds);
         }
         if (topBarId == 2) {
-            return productQueryRepository.countPopularProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsIds);
         }
         if (topBarId == 3) {
-            return productQueryRepository.countDiscountProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsIds);
         }
 
 
