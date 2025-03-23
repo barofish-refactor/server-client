@@ -46,15 +46,8 @@ public class TopBarControllerV2 {
 
     @GetMapping("/{id}/count")
     public ResponseEntity<CustomResponse<Long>> selectTopBarCountV2(@PathVariable("id") Integer id,
-                                                                  @RequestParam(value = "page", defaultValue = "1", required = false) Integer page,
-                                                                  @RequestParam(value = "take", defaultValue = "10", required = false) Integer take,
                                                                   @RequestParam(value = "categoryIds", required = false) String categoryIds,
-                                                                  @RequestParam(value = "filterFieldIds", required = false) String filterFieldIds,
-                                                                  @RequestParam(value = "typeIds", required = false) String typeIds,
-                                                                  @RequestParam(value = "locationIds", required = false) String locationIds,
-                                                                  @RequestParam(value = "processIds", required = false) String processIds,
-                                                                  @RequestParam(value = "usageIds", required = false) String usageIds,
-                                                                  @RequestParam(value = "storageIds", required = false) String storageIds) {
+                                                                  @RequestParam(value = "filterFieldIds", required = false) String filterFieldIds) {
         CustomResponse<Long> response = new CustomResponse<>();
 
         Long count = (long) productQueryService.countTopBarProduct(
@@ -76,8 +69,7 @@ public class TopBarControllerV2 {
         Page<ProductListDto> productListDtos = productQueryService.selectTopBarProductList(
                 id,
                 PageRequest.of(page - 1, take),
-                utils.str2IntList(filterFieldIds),
-                null);
+                utils.str2IntList(filterFieldIds));
         res.setIsSuccess(true);
         res.setData(Optional.of(productListDtos));
 

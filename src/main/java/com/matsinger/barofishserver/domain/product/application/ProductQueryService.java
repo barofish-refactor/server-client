@@ -111,7 +111,6 @@ public class ProductQueryService {
             List<Integer> filterFieldIds,
             Integer curationId,
             String keyword,
-            List<Integer> productIds,
             Integer storeId) {
 
         return productQueryRepository.countProducts(
@@ -119,7 +118,7 @@ public class ProductQueryService {
                 filterFieldIds,
                 curationId,
                 keyword,
-                productIds,
+                null,
                 storeId);
     }
 
@@ -201,36 +200,27 @@ public class ProductQueryService {
 
     public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
                                                         PageRequest pageRequest,
-                                                        List<Integer> filterFieldsIds,
-                                                        List<Integer> categoryIds) {
+                                                        List<Integer> filterFieldsIds) {
         PageImpl<ProductListDto> productDtos = null;
+
         if (topBarId == 1) {
             productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, filterFieldsIds);
         }
         if (topBarId == 2) {
             productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, filterFieldsIds);
         }
         if (topBarId == 3) {
             productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, categoryIds,
-                    filterFieldsIds, null,
-                    null, null
-            );
+                    pageRequest, filterFieldsIds);
         }
 
-        for (ProductListDto productDto : productDtos) {
-            // 여러개 이미지 중 하나로 세팅
-            productDto.convertImageUrlsToFirstUrl();
-            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
-        }
+//        for (ProductListDto productDto : productDtos) {
+//            // 여러개 이미지 중 하나로 세팅
+//            productDto.convertImageUrlsToFirstUrl();
+//            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
+//        }
 
         return productDtos;
     }
@@ -239,22 +229,13 @@ public class ProductQueryService {
                                       List<Integer> filterFieldsIds,
                                       List<Integer> categoryIds) {
         if (topBarId == 1) {
-            return productQueryRepository.countNewerProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsIds);
         }
         if (topBarId == 2) {
-            return productQueryRepository.countPopularProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsIds);
         }
         if (topBarId == 3) {
-            return productQueryRepository.countDiscountProducts(
-                    categoryIds, filterFieldsIds, null,
-                    null, null
-            );
+            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsIds);
         }
 
 
