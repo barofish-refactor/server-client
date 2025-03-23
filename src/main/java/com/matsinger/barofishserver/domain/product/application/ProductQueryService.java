@@ -216,11 +216,11 @@ public class ProductQueryService {
                     pageRequest, filterFieldsIds);
         }
 
-        for (ProductListDto productDto : productDtos) {
-            // 여러개 이미지 중 하나로 세팅
-            productDto.convertImageUrlsToFirstUrl();
-            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
-        }
+//        for (ProductListDto productDto : productDtos) {
+//            // 여러개 이미지 중 하나로 세팅
+//            productDto.convertImageUrlsToFirstUrl();
+//            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
+//        }
 
         return productDtos;
     }

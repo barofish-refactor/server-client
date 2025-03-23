@@ -73,11 +73,11 @@ public class ProductQueryRepository {
                 .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
                 .where(product.state.eq(ProductState.ACTIVE),
-                        isPromotionInProgress(),
+//                        isPromotionInProgress(),
                         isIncludedSearchFilter(filterFieldsIds)
                 )
                 .groupBy(product.id)
-                .orderBy(orderSpecifiers)
+//                .orderBy(orderSpecifiers)
                 .offset(pageRequest.getOffset())
                 .limit(pageRequest.getPageSize())
                 .fetch();
@@ -89,7 +89,7 @@ public class ProductQueryRepository {
         Integer count = (int) queryFactory.select(product.count())
                 .from(product)
                 .where(product.state.eq(ProductState.ACTIVE),
-                        isPromotionInProgress(),
+//                        isPromotionInProgress(),
                         isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds)
                 )
@@ -167,7 +167,7 @@ public class ProductQueryRepository {
                 .select(product.count())
                 .from(product)
                 .where(product.state.eq(ProductState.ACTIVE),
-                        isPromotionInProgress(),
+//                        isPromotionInProgress(),
                         isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds)
                 )
@@ -221,7 +221,7 @@ public class ProductQueryRepository {
                 .from(product)
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
                 .where(product.state.eq(ProductState.ACTIVE),
-                        isPromotionInProgress(),
+//                        isPromotionInProgress(),
                         isIncludedCategory(categoryIds),
                         isIncludedSearchFilter(filterFieldsIds),
                         isDiscountApplied()
