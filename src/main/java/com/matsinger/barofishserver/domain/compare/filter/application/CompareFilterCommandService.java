@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.compare.filter.application;
 
-import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterRepository;
+import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterMapRepository;
 import com.matsinger.barofishserver.domain.compare.filter.domain.CompareFilter;
 import com.matsinger.barofishserver.domain.compare.filter.repository.CompareFilterRepository;
 import com.matsinger.barofishserver.domain.product.productfilter.repository.ProductFilterRepository;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class CompareFilterCommandService {
     private final CompareFilterRepository compareFilterRepository;
     private final ProductFilterRepository productFilterRepository;
-    private final CategoryFilterRepository categoryFilterRepository;
+    private final CategoryFilterMapRepository categoryFilterRepository;
     public CompareFilter addCompareFilter(CompareFilter compareFilter) {
         return compareFilterRepository.save(compareFilter);
     }

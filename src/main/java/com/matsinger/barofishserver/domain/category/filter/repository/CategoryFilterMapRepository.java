@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface CategoryFilterRepository extends JpaRepository<CategoryFilterMap, CategoryFilterId> {
+public interface CategoryFilterMapRepository extends JpaRepository<CategoryFilterMap, CategoryFilterId> {
     void deleteAllByCategoryId(Integer categoryId);
 
     void deleteAllByCompareFilterId(Integer compareFilterId);
