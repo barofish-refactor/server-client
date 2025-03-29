@@ -16,29 +16,27 @@ public class StoreOrderCalculator {
     private final DeliveryFeeCalculator deliveryFeeCalculator;
 
     public Map<StoreInfo, StoreOrderProducts> calculateStoreOrders(
-            List<OrderProductInfo> orderProducts,
-            Map<Integer, StoreInfo> storeMap
+            List<OrderProductInfo> orderProducts
     ) {
         // 스토어별로 주문 상품 그룹화
-        Map<Integer, List<OrderProductInfo>> storeProductsMap = orderProducts.stream()
-                .collect(Collectors.groupingBy(OrderProductInfo::getStoreId));
+        Map<StoreInfo, List<OrderProductInfo>> storeProductsMap = orderProducts.stream()
+                .collect(Collectors.groupingBy(OrderProductInfo::getStoreInfo));
 
         return storeProductsMap.entrySet().stream()
                 .collect(Collectors.toMap(
-                        entry -> storeMap.get(entry.getKey()),
+                        entry -> entry.getKey(),
                         entry -> {
-                            StoreInfo storeInfo = storeMap.get(entry.getKey());
                             List<OrderProductInfo> storeProducts = entry.getValue();
                             
                             // 배송비 계산
-                            deliveryFeeCalculator.calculateDeliveryFee(storeInfo, storeProducts);
+                            deliveryFeeCalculator.calculateDeliveryFee(entry.getKey(), storeProducts);
                             
-                            return calculateStoreOrderProducts(storeProducts);
+                            return calculateStoreOrder(storeProducts);
                         }
                 ));
     }
 
-    private StoreOrderProducts calculateStoreOrderProducts(List<OrderProductInfo> storeProducts) {
+    private StoreOrderProducts calculateStoreOrder(List<OrderProductInfo> storeProducts) {
         int totalOrderProductPrice = storeProducts.stream()
                 .mapToInt(OrderProductInfo::getPrice)
                 .sum();

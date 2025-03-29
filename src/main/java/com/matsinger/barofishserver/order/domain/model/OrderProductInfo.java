@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 
 import com.matsinger.barofishserver.domain.product.domain.ProductDeliverFeeType;
+import com.matsinger.barofishserver.domain.store.domain.StoreInfo;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -209,5 +210,9 @@ public class OrderProductInfo {
     public boolean isCancelableState() {
         return this.state == OrderProductState.WAIT_DEPOSIT ||
                 this.state == OrderProductState.PAYMENT_DONE;
+    }
+
+    public StoreInfo getStoreInfo() {
+        return product.getStoreInfo();
     }
 }
