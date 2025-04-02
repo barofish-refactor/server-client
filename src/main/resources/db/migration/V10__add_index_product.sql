@@ -1,0 +1,1 @@
+create index product_state_id on product (state, id);
