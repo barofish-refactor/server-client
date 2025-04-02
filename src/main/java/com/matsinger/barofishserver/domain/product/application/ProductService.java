@@ -4,7 +4,6 @@ import com.matsinger.barofishserver.domain.address.application.AddressQueryServi
 import com.matsinger.barofishserver.domain.address.domain.Address;
 import com.matsinger.barofishserver.domain.basketProduct.repository.BasketProductOptionRepository;
 import com.matsinger.barofishserver.domain.category.dto.CategoryDto;
-import com.matsinger.barofishserver.domain.category.filter.application.CategoryFilterService;
 import com.matsinger.barofishserver.domain.compare.domain.SaveProduct;
 import com.matsinger.barofishserver.domain.compare.domain.SaveProductId;
 import com.matsinger.barofishserver.domain.compare.filter.domain.CompareFilter;
@@ -18,7 +17,6 @@ import com.matsinger.barofishserver.domain.product.dto.*;
 import com.matsinger.barofishserver.domain.product.option.domain.Option;
 import com.matsinger.barofishserver.domain.product.option.dto.OptionDto;
 import com.matsinger.barofishserver.domain.product.option.repository.OptionRepository;
-import com.matsinger.barofishserver.domain.product.optionitem.application.OptionItemQueryService;
 import com.matsinger.barofishserver.domain.product.optionitem.domain.OptionItem;
 import com.matsinger.barofishserver.domain.product.optionitem.dto.OptionItemDto;
 import com.matsinger.barofishserver.domain.product.optionitem.repository.OptionItemRepository;
@@ -30,12 +28,9 @@ import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.review.application.ReviewQueryService;
 import com.matsinger.barofishserver.domain.review.domain.Review;
 import com.matsinger.barofishserver.domain.review.dto.ReviewDto;
-import com.matsinger.barofishserver.domain.review.dto.ReviewStatistic;
 import com.matsinger.barofishserver.domain.review.dto.ReviewTotalStatistic;
-import com.matsinger.barofishserver.domain.review.dto.v2.ReviewEvaluationSummaryDto;
 import com.matsinger.barofishserver.domain.review.repository.ReviewLikeRepository;
 import com.matsinger.barofishserver.domain.review.repository.ReviewRepository;
-import com.matsinger.barofishserver.domain.review.repository.ReviewRepositoryImpl;
 import com.matsinger.barofishserver.domain.searchFilter.application.SearchFilterQueryService;
 import com.matsinger.barofishserver.domain.searchFilter.domain.ProductSearchFilterMap;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
@@ -674,5 +669,9 @@ public class ProductService {
                 .storeImage(product.getStoreImageUrl())
                 .isLike(isLike)
                 .build();
+    }
+
+    public List<Integer> findIdsByFieldIdsIn(List<Integer> fieldCombination) {
+        return productSearchFilterMapRepository.findProductIdsByFieldIdIn(fieldCombination);
     }
 }
