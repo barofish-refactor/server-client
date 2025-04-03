@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.category.application.CategorySearchFi
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.category.domain.CategorySearchFilterMap;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
+import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class FilterProductCacheInitService {
     private final CategoryQueryService categoryQueryService;
     private final ProductService productService;
     private final CategorySearchFilterMapService categorySearchFilterMapService;
+    private final FilterProductCacheRepository filterProductCacheRepository;
 
     /**
      * 모든 카테고리에 대한 필터 상품 캐시 초기화
@@ -76,10 +78,8 @@ public class FilterProductCacheInitService {
                 }
 
                 Collections.sort(fieldCombination);
-                String fieldString = convertToCommaSeperated(fieldCombination);
-
                 boolean exists = checkIfCombinationExists(
-                        pCategory.getId(), subCategory.getId(), filter.getId(), fieldString);
+                        pCategory.getId(), subCategory.getId(), filter.getId(), fieldCombination);
 
                 if (!exists) {
                     List<Integer> productIds = productService.findIdsByFieldIdsIn(fieldCombination);
@@ -141,19 +141,11 @@ public class FilterProductCacheInitService {
      * 특정 필터 조합이 이미 존재하는지 확인
      */
     private boolean checkIfCombinationExists(
-            Integer categoryId, Integer subCategoryId, Integer filterId, String fieldIdsJson) {
-        return false;
-        // 저장
-//        return filterProductCacheRepository
-//                .findByCategoryIdAndSubCategoryIdAndFilterIdAndFieldIds(
-//                        categoryId, subCategoryId, filterId, fieldIdsJson)
-//                .isPresent();
-    }
-
-    private String convertToCommaSeperated(List<?> list) {
-        return list.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(","));
+            Integer categoryId, Integer subCategoryId, Integer filterId, List<Integer> fieldList) {
+        return filterProductCacheRepository
+                .findByCategoryIdAndSubCategoryIdAndFilterIdAndFieldIds(
+                        categoryId, subCategoryId, filterId, fieldList)
+                .isPresent();
     }
     
     /**
