@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.dto.ExpectedArrivalDateResponse;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
+import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.product.weeksdate.domain.WeeksDate;
@@ -12,6 +13,8 @@ import com.matsinger.barofishserver.domain.product.weeksdate.repository.WeeksDat
 import com.matsinger.barofishserver.domain.review.application.ReviewQueryService;
 import com.matsinger.barofishserver.domain.review.dto.ProductReviewPictureInquiryDto;
 import com.matsinger.barofishserver.domain.review.repository.ReviewQueryRepository;
+import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
+import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
 import com.matsinger.barofishserver.domain.tastingNote.basketTastingNote.repository.BasketTastingNoteRepository;
 import com.matsinger.barofishserver.domain.user.application.UserQueryService;
 import com.matsinger.barofishserver.domain.user.domain.User;
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +31,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.matsinger.barofishserver.domain.product.filter.domain.FilterProductCache;
+import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +52,9 @@ public class ProductQueryService {
     private final BasketTastingNoteRepository basketTastingNoteRepository;
     private final ReviewQueryRepository reviewQueryRepository;
     private final ReviewQueryService reviewQueryService;
+    private final SearchFilterFieldRepository searchFilterFieldRepository;
+    private final FilterProductCacheRepository filterProductCacheRepository;
+    private final FilterProductCacheQueryRepository filterProductCacheQueryRepository;
 
     public Product findById(int productId) {
         return productRepository.findById(productId)
@@ -61,15 +72,19 @@ public class ProductQueryService {
             Integer storeId,
             Integer userId) {
 
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
+        int count = countProducts(filterFieldsMap);
+
         Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
                 pageRequest,
                 sortBy,
                 categoryIds,
-                filterFieldIds,
+                filterFieldsMap,
                 curationId,
                 keyword,
                 productIds,
-                storeId);
+                storeId,
+                count);
 
         List<Integer> userBasketProductIds = new ArrayList<>();
         if (userId != null) {
@@ -106,6 +121,66 @@ public class ProductQueryService {
         return pagedProductDtos;
     }
 
+    public Integer countProducts(Map<Integer, List<Integer>> filterFieldsMap) {
+        if (filterFieldsMap == null || filterFieldsMap.isEmpty()) {
+            return 0;
+        }
+
+        // 필터 ID와 필드 ID 문자열 쌍을 준비
+        Map<Integer, String> filterFieldPairs = new HashMap<>();
+        
+        // 각 필터의 필드 ID를 문자열로 변환하여 쌍으로 추가
+        for (Map.Entry<Integer, List<Integer>> entry : filterFieldsMap.entrySet()) {
+            Integer filterId = entry.getKey();
+            List<Integer> fieldIds = entry.getValue();
+            
+            // fieldIds를 문자열로 변환 (예: "1,2,3")
+            String fieldIdsString = fieldIds.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+            
+            // 필터 ID와 필드 ID 문자열을 쌍으로 추가
+            filterFieldPairs.put(filterId, fieldIdsString);
+        }
+        
+        // 한 번에 모든 필터 캐시 조회
+        List<FilterProductCache> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
+        
+        // 조회 결과가 없으면 0 반환
+        if (caches.isEmpty()) {
+            return 0;
+        }
+        
+        // productIds의 길이를 기준으로 정렬 (가장 짧은 것부터)
+        caches.sort((a, b) -> {
+            int aLength = a.getProductIds().split(",").length;
+            int bLength = b.getProductIds().split(",").length;
+            return Integer.compare(aLength, bLength);
+        });
+        
+        // 첫 번째 캐시의 상품 ID 목록을 초기 결과로 사용
+        Set<Integer> resultProductIds = Arrays.stream(caches.get(0).getProductIds().split(","))
+                .map(Integer::parseInt)
+                .collect(Collectors.toSet());
+        
+        // 나머지 캐시들과 AND 연산 수행
+        for (int i = 1; i < caches.size(); i++) {
+            Set<Integer> currentProductIds = Arrays.stream(caches.get(i).getProductIds().split(","))
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toSet());
+            
+            // AND 연산 수행 (교집합)
+            resultProductIds.retainAll(currentProductIds);
+            
+            // 중간 결과가 비어있으면 더 이상 진행할 필요 없음
+            if (resultProductIds.isEmpty()) {
+                return 0;
+            }
+        }
+        
+        return resultProductIds.size();
+    }
+
     public int countProducts(
             List<Integer> categoryIds,
             List<Integer> filterFieldIds,
@@ -113,9 +188,11 @@ public class ProductQueryService {
             String keyword,
             Integer storeId) {
 
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
+
         return productQueryRepository.countProducts(
                 categoryIds,
-                filterFieldIds,
+                filterFieldsMap,
                 curationId,
                 keyword,
                 null,
@@ -201,19 +278,22 @@ public class ProductQueryService {
     public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
                                                         PageRequest pageRequest,
                                                         List<Integer> filterFieldsIds) {
-        PageImpl<ProductListDto> productDtos = null;
+        List<ProductListDto> productDtos = null;
+
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+        int count = countProducts(filterFieldsMap);
 
         if (topBarId == 1) {
             productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, filterFieldsIds);
+                    pageRequest, filterFieldsMap, count);
         }
         if (topBarId == 2) {
             productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, filterFieldsIds);
+                    pageRequest, filterFieldsMap, count);
         }
         if (topBarId == 3) {
             productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, filterFieldsIds);
+                    pageRequest, filterFieldsMap, count);
         }
 
 //        for (ProductListDto productDto : productDtos) {
@@ -222,20 +302,46 @@ public class ProductQueryService {
 //            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
 //        }
 
-        return productDtos;
+        return new PageImpl<>(productDtos, pageRequest, count);
+    }
+
+    private Map<Integer, List<Integer>> createFilterFieldsMap(List<Integer> filterFieldsIds) {
+        List<SearchFilterField> searchFilterFields = null;
+        if (filterFieldsIds == null) {
+            searchFilterFields = searchFilterFieldRepository.findAll();
+        } else {
+            searchFilterFields = searchFilterFieldRepository.findAllById(filterFieldsIds);
+        }
+
+        Map<Integer, List<Integer>> filterAndFieldMapper = new HashMap<>();
+
+        for (SearchFilterField filterField : searchFilterFields) {
+            int searchFilterId = filterField.getSearchFilterId();
+            List<Integer> existingValue = filterAndFieldMapper.getOrDefault(searchFilterId, new ArrayList<>());
+            existingValue.add(filterField.getId());
+            filterAndFieldMapper.put(
+                    searchFilterId,
+                    existingValue
+            );
+        }
+
+        return filterAndFieldMapper;
     }
 
     public Integer countTopBarProduct(Integer topBarId,
                                       List<Integer> filterFieldsIds,
                                       List<Integer> categoryIds) {
+
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+
         if (topBarId == 1) {
-            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsIds);
+            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsMap);
         }
         if (topBarId == 2) {
-            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsIds);
+            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsMap);
         }
         if (topBarId == 3) {
-            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsIds);
+            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsMap);
         }
 
 
