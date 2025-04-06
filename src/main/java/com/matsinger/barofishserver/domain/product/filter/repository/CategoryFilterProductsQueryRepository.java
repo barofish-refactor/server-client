@@ -14,7 +14,7 @@ import static com.matsinger.barofishserver.domain.product.filter.domain.QFilterP
 
 @Repository
 @RequiredArgsConstructor
-public class FilterProductCacheQueryRepository {
+public class CategoryFilterProductsQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<CategoryFilterProducts> findByFilterIdAndFieldIdsPairs(Map<Integer, String> filterFieldPairs) {

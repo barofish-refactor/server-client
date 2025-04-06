@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.product.application;
 
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
-import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheQueryRepository;
+import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsQueryRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
 import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +28,7 @@ class ProductQueryServiceTest {
 
     @Autowired private ProductQueryService productQueryService;
     @Autowired private SearchFilterFieldRepository searchFilterFieldRepository;
-    @Autowired private FilterProductCacheQueryRepository filterProductCacheQueryRepository;
+    @Autowired private CategoryFilterProductsQueryRepository categoryFilterProductsQueryRepository;
 
     @DisplayName("countProducts 메서드의 각 단계별 성능을 측정합니다")
     @Test
@@ -69,7 +69,7 @@ class ProductQueryServiceTest {
 
         // 1. DB에서 엔티티 조회 시간 측정
         long dbQueryStartTime = System.currentTimeMillis();
-        List<CategoryFilterProducts> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
+        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
         long dbQueryEndTime = System.currentTimeMillis();
         log.info("DB 조회 시간: {}ms", dbQueryEndTime - dbQueryStartTime);
         
@@ -177,7 +177,7 @@ class ProductQueryServiceTest {
                     .map(entry -> CompletableFuture.supplyAsync(() -> {
                         Map<Integer, String> singlePair = new HashMap<>();
                         singlePair.put(entry.getKey(), entry.getValue());
-                        List<CategoryFilterProducts> result = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(singlePair);
+                        List<CategoryFilterProducts> result = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(singlePair);
                         return result.isEmpty() ? null : result.get(0);
                     }, executor))
                     .collect(Collectors.toList());

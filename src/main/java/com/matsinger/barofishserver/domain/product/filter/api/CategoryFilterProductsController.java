@@ -20,7 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/filter-product-cache")
 @RequiredArgsConstructor
 @Tag(name = "필터 상품 캐시", description = "필터 상품 캐시 관련 API")
-public class FilterProductCacheController {
+public class CategoryFilterProductsController {
 
     private final FilterProductCacheInitService filterProductCacheInitService;
 

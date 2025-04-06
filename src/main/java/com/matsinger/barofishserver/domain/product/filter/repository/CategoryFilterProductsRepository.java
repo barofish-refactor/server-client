@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FilterProductCacheRepository extends JpaRepository<CategoryFilterProducts, String> {
+public interface CategoryFilterProductsRepository extends JpaRepository<CategoryFilterProducts, String> {
     boolean existsByFilterIdAndFieldIds(Integer filterId, String fieldList);
 }

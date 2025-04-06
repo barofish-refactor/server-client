@@ -2,7 +2,7 @@ package com.matsinger.barofishserver.domain.product.filter.application;
 
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
-import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
+import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.product.filter.utils.FilterConverter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class FilterProductCacheInitService {
 
     private final ProductService productService;
-    private final FilterProductCacheRepository filterProductCacheRepository;
+    private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final SearchFilterRepository searchFilterRepository;
 
     /**
@@ -123,7 +123,7 @@ public class FilterProductCacheInitService {
      * 특정 필터 조합이 이미 존재하는지 확인
      */
     private boolean checkIfCombinationExists(Integer filterId, String fieldString) {
-        return filterProductCacheRepository
+        return categoryFilterProductsRepository
                 .existsByFilterIdAndFieldIds(filterId, fieldString);
     }
     
@@ -142,6 +142,6 @@ public class FilterProductCacheInitService {
                 FilterConverter.convert(fieldIds),
                 FilterConverter.convert(productIds)
         );
-        filterProductCacheRepository.save(categoryFilterProducts);
+        categoryFilterProductsRepository.save(categoryFilterProducts);
     }
 } 
