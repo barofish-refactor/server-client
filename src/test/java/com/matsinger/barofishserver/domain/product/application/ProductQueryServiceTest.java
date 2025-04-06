@@ -1,11 +1,9 @@
 package com.matsinger.barofishserver.domain.product.application;
 
-import com.matsinger.barofishserver.domain.product.filter.domain.FilterProductCache;
+import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheQueryRepository;
-import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
 import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -71,7 +69,7 @@ class ProductQueryServiceTest {
 
         // 1. DB에서 엔티티 조회 시간 측정
         long dbQueryStartTime = System.currentTimeMillis();
-        List<FilterProductCache> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
+        List<CategoryFilterProducts> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
         long dbQueryEndTime = System.currentTimeMillis();
         log.info("DB 조회 시간: {}ms", dbQueryEndTime - dbQueryStartTime);
         
@@ -175,17 +173,17 @@ class ProductQueryServiceTest {
         
         try {
             // 각 필터 ID와 필드 ID 쌍에 대해 병렬로 조회
-            List<CompletableFuture<FilterProductCache>> futures = filterFieldPairs.entrySet().stream()
+            List<CompletableFuture<CategoryFilterProducts>> futures = filterFieldPairs.entrySet().stream()
                     .map(entry -> CompletableFuture.supplyAsync(() -> {
                         Map<Integer, String> singlePair = new HashMap<>();
                         singlePair.put(entry.getKey(), entry.getValue());
-                        List<FilterProductCache> result = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(singlePair);
+                        List<CategoryFilterProducts> result = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(singlePair);
                         return result.isEmpty() ? null : result.get(0);
                     }, executor))
                     .collect(Collectors.toList());
             
             // 결과 수집
-            List<FilterProductCache> caches = futures.stream()
+            List<CategoryFilterProducts> caches = futures.stream()
                     .map(CompletableFuture::join)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
@@ -213,7 +211,7 @@ class ProductQueryServiceTest {
      * 메모리 효율적인 AND 연산을 수행합니다.
      * 가장 작은 집합을 기준으로 AND 연산을 수행하여 메모리 사용량을 최소화합니다.
      */
-    private Set<Integer> memoryEfficientAndOperation(List<FilterProductCache> caches) {
+    private Set<Integer> memoryEfficientAndOperation(List<CategoryFilterProducts> caches) {
         if (caches.isEmpty()) {
             return new HashSet<>();
         }

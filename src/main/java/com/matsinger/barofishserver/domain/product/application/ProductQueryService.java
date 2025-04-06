@@ -5,6 +5,7 @@ import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.dto.ExpectedArrivalDateResponse;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
+import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
@@ -23,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +34,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.matsinger.barofishserver.domain.product.filter.domain.FilterProductCache;
 import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -144,7 +142,7 @@ public class ProductQueryService {
         }
         
         // 한 번에 모든 필터 캐시 조회
-        List<FilterProductCache> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
+        List<CategoryFilterProducts> caches = filterProductCacheQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
         
         // 조회 결과가 없으면 0 반환
         if (caches.isEmpty()) {

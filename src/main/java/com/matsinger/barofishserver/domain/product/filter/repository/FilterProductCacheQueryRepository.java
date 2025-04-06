@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.product.filter.repository;
 
-import com.matsinger.barofishserver.domain.product.filter.domain.FilterProductCache;
+import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import static com.matsinger.barofishserver.domain.product.filter.domain.QFilterP
 public class FilterProductCacheQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    public List<FilterProductCache> findByFilterIdAndFieldIdsPairs(Map<Integer, String> filterFieldPairs) {
+    public List<CategoryFilterProducts> findByFilterIdAndFieldIdsPairs(Map<Integer, String> filterFieldPairs) {
         List<BooleanExpression> orConditions = new ArrayList<>();
 
         for (Map.Entry<Integer, String> entry : filterFieldPairs.entrySet()) {

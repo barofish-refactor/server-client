@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.product.filter.application;
 
 import com.matsinger.barofishserver.domain.product.application.ProductService;
-import com.matsinger.barofishserver.domain.product.filter.domain.FilterProductCache;
+import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.FilterProductCacheRepository;
 import com.matsinger.barofishserver.domain.product.filter.utils.FilterConverter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
@@ -137,11 +137,11 @@ public class FilterProductCacheInitService {
             List<Integer> productIds
     ) {
 
-        FilterProductCache filterProductCache = FilterProductCache.from(
+        CategoryFilterProducts categoryFilterProducts = CategoryFilterProducts.from(
                 filter.getId(),
                 FilterConverter.convert(fieldIds),
                 FilterConverter.convert(productIds)
         );
-        filterProductCacheRepository.save(filterProductCache);
+        filterProductCacheRepository.save(categoryFilterProducts);
     }
 } 
