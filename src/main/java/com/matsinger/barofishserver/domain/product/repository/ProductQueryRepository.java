@@ -5,7 +5,6 @@ import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.domain.ProductState;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
-import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
