@@ -13,4 +13,6 @@ public interface CategorySearchFilterMapRepository extends JpaRepository<Categor
 
     @Query("SELECT csm FROM CategorySearchFilterMap csm WHERE csm.category.id = :categoryId")
     List<CategorySearchFilterMap> findByCategoryId(@Param("categoryId") Integer categoryId);
-} 
+
+    List<CategorySearchFilterMap> findAllByCategoryId(int categoryId);
+}

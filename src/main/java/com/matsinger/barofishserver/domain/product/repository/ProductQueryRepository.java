@@ -463,4 +463,16 @@ public class ProductQueryRepository {
                         .and(product.state.eq(ProductState.INACTIVE_PARTNER)))
                 .fetch();
     }
+
+    public List<Integer> findCategoryFieldsProduct(int categoryId, List<Integer> fields) {
+        return queryFactory
+                .select(productSearchFilterMap.productId)
+                .from(product)
+                .leftJoin(productSearchFilterMap).on(productSearchFilterMap.productId.eq(product.id))
+                .where(
+                        product.category.id.eq(categoryId),
+                        productSearchFilterMap.fieldId.in(fields)
+                )
+                .fetch();
+    }
 }

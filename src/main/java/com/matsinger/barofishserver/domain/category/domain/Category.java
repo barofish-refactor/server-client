@@ -66,4 +66,8 @@ public class Category {
         return CategoryDto.builder().id(this.id).parentId(this.categoryId).name(this.name).image(this.image).ParentCategoryName(
                 parentName).categories(categories).build();
     }
+
+    public boolean isParent() {
+        return categoryId == null;
+    }
 }

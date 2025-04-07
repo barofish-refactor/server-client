@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.matsinger.barofishserver.domain.product.filter.domain.QFilterProductCache.filterProductCache;
+import static com.matsinger.barofishserver.domain.product.filter.domain.QCategoryFilterProducts.categoryFilterProducts;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,14 +22,25 @@ public class CategoryFilterProductsQueryRepository {
 
         for (Map.Entry<Integer, String> entry : filterFieldPairs.entrySet()) {
             orConditions.add(
-                    filterProductCache.filterId.eq(entry.getKey())
-                            .and(filterProductCache.fieldIds.eq(entry.getValue()))
+                            categoryFilterProducts.filterId.eq(entry.getKey())
+                            .and(categoryFilterProducts.fieldIds.eq(entry.getValue()))
             );
         }
 
         return queryFactory
-                .selectFrom(filterProductCache)
+                .selectFrom(categoryFilterProducts)
                 .where(orConditions.stream().reduce(BooleanExpression::or).orElse(null))
                 .fetch();
+    }
+
+    public List<CategoryFilterProducts> findBy(int categoryId, int cCategoryId, Integer filterId, String fieldIds) {
+        return queryFactory
+                .selectFrom(categoryFilterProducts)
+                .where(categoryFilterProducts.categoryId.eq(categoryId)
+                        .and(categoryFilterProducts.subCategoryId.eq(cCategoryId))
+                        .and(categoryFilterProducts.filterId.eq(filterId))
+                        .and(categoryFilterProducts.fieldIds.eq(fieldIds)))
+                .fetch();
+
     }
 }

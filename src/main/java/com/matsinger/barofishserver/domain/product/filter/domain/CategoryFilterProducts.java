@@ -34,8 +34,10 @@ public class CategoryFilterProducts {
     @Column(name = "product_ids", nullable = false)
     private String productIds;
 
-    public static CategoryFilterProducts from(int filterId, String fieldsString, String productsString) {
+    public static CategoryFilterProducts from(Integer pCategoryId, Integer cCategoryId, int filterId, String fieldsString, String productsString) {
         return CategoryFilterProducts.builder()
+                .categoryId(pCategoryId)
+                .subCategoryId(cCategoryId)
                 .filterId(filterId)
                 .fieldIds(fieldsString)
                 .productIds(productsString)

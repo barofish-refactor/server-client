@@ -1,20 +1,22 @@
 package com.matsinger.barofishserver.domain.product.filter.application;
 
+import com.matsinger.barofishserver.domain.category.domain.Category;
+import com.matsinger.barofishserver.domain.category.domain.CategorySearchFilterMap;
+import com.matsinger.barofishserver.domain.category.repository.CategoryRepository;
+import com.matsinger.barofishserver.domain.category.repository.CategorySearchFilterMapRepository;
 import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.product.filter.utils.FilterConverter;
+import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
-import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -26,18 +28,22 @@ import java.util.stream.Collectors;
 public class FilterProductCacheInitService {
 
     private final ProductService productService;
+    private final ProductQueryRepository productQueryRepository;
     private final CategoryFilterProductsRepository categoryFilterProductsRepository;
-    private final SearchFilterRepository searchFilterRepository;
+    private final CategorySearchFilterMapRepository categorySearchFilterMapRepository;
+    private final CategoryRepository categoryRepository;
 
     /**
      * 모든 카테고리에 대한 필터 상품 캐시 초기화
      */
     public void initializeFilterProductCaches() {
         try {
-            List<SearchFilter> filters = searchFilterRepository.findAll();
-
-            for (SearchFilter filter : filters) {
-                processSingleFilter(filter);
+            List<Category> pCategories = categoryRepository.findAllByCategoryIdIsNull();
+            for (Category pCategory : pCategories) {
+                for (Category cCategory : pCategory.getCategoryList()) {
+                    processSingleCategory(cCategory);
+                }
+                processSingleCategory(pCategory);
             }
         } catch (Exception e) {
             log.error("필터 상품 캐시 초기화 중 오류 발생", e);
@@ -49,11 +55,15 @@ public class FilterProductCacheInitService {
      * 특정 카테고리와 필터에 대한 필터 상품 캐시 초기화
      */
     @Transactional
-    public void processSingleFilter(SearchFilter filter) {
+    public void processSingleCategory(Category category) {
+        List<CategorySearchFilterMap> categoryFilterMaps = categorySearchFilterMapRepository.findAllByCategoryId(category.getId());
+        List<SearchFilter> categoryFilters = categoryFilterMaps.stream()
+                .map(categoryFilterMap -> categoryFilterMap.getSearchFilter())
+                .toList();
 
-        try {
-            List<Integer> fieldIds = getFieldIdsFromFilter(filter);
-            List<List<Integer>> allFieldCombinations = generateAllFieldCombinations(fieldIds);
+        for (SearchFilter filter : categoryFilters) {
+                List<Integer> fieldIds = getFieldIdsFromFilter(filter);
+                List<List<Integer>> allFieldCombinations = generateAllFieldCombinations(fieldIds);
 
             for (List<Integer> fieldCombination : allFieldCombinations) {
                 if (fieldCombination.isEmpty()) {
@@ -61,20 +71,28 @@ public class FilterProductCacheInitService {
                 }
 
                 Collections.sort(fieldCombination);
-                boolean exists = checkIfCombinationExists(filter.getId(), FilterConverter.convert(fieldCombination));
 
-                if (!exists) {
-                    List<Integer> productIds = productService.findIdsByFieldIdsIn(fieldCombination);
-                    Collections.sort(productIds);
+                boolean exists = checkIfCombinationExists(category.getCategoryId(), category.getId(), filter.getId(), FilterConverter.convert(fieldCombination));
+                if (exists) {
+                    return;
+                }
 
-                    // 저장
-                    saveFilterProductCache(filter, fieldCombination, productIds);
+                List<Integer> productIds = category.isParent()
+                    ? productService.findIdsByCategoryIdsInAndFieldIdsIn(
+                        category.getCategoryList().stream()
+                                .map(Category::getId)
+                                .collect(Collectors.toList()),
+                        fieldCombination)
+                    : productQueryRepository.findCategoryFieldsProduct(category.getId(), fieldCombination);
+
+                Collections.sort(productIds);
+                // 저장
+                if (category.isParent()) {
+                    saveFilterProductCache(category.getId(), null, filter, fieldCombination, productIds);
+                } else {
+                    saveFilterProductCache(category.getCategoryId(), category.getId(), filter, fieldCombination, productIds);
                 }
             }
-        } catch (Exception e) {
-            log.error("필터 상품 캐시 초기화 중 오류 발생 - 필터: {}",
-                    filter.getName(), e);
-            throw e;
         }
     }
 
@@ -122,26 +140,30 @@ public class FilterProductCacheInitService {
     /**
      * 특정 필터 조합이 이미 존재하는지 확인
      */
-    private boolean checkIfCombinationExists(Integer filterId, String fieldString) {
+    private boolean checkIfCombinationExists(Integer pCategoryId, Integer cCategoryId, Integer filterId, String fieldString) {
         return categoryFilterProductsRepository
-                .existsByFilterIdAndFieldIds(filterId, fieldString);
+                .existsByCategoryIdAndSubCategoryIdAndFilterIdAndFieldIds(pCategoryId, cCategoryId, filterId, fieldString);
     }
     
     /**
      * 필터 상품 캐시 저장
      */
     @Transactional
-    public void saveFilterProductCache(
+    public CategoryFilterProducts saveFilterProductCache(
+            Integer pCategoryId,
+            Integer cCategoryId,
             SearchFilter filter,
             List<Integer> fieldIds,
             List<Integer> productIds
     ) {
 
         CategoryFilterProducts categoryFilterProducts = CategoryFilterProducts.from(
+                pCategoryId,
+                cCategoryId,
                 filter.getId(),
                 FilterConverter.convert(fieldIds),
                 FilterConverter.convert(productIds)
         );
-        categoryFilterProductsRepository.save(categoryFilterProducts);
+        return categoryFilterProductsRepository.save(categoryFilterProducts);
     }
 } 
