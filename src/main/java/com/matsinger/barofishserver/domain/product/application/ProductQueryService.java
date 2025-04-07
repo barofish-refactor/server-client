@@ -1,5 +1,7 @@
 package com.matsinger.barofishserver.domain.product.application;
 
+import com.matsinger.barofishserver.domain.category.application.CategoryQueryService;
+import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.dto.ExpectedArrivalDateResponse;
@@ -34,7 +36,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -51,8 +52,8 @@ public class ProductQueryService {
     private final ReviewQueryRepository reviewQueryRepository;
     private final ReviewQueryService reviewQueryService;
     private final SearchFilterFieldRepository searchFilterFieldRepository;
-    private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final CategoryFilterProductsQueryRepository categoryFilterProductsQueryRepository;
+    private final CategoryQueryService categoryQueryService;
 
     public Product findById(int productId) {
         return productRepository.findById(productId)
@@ -71,7 +72,7 @@ public class ProductQueryService {
             Integer userId) {
 
         Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
-        int count = countProducts(filterFieldsMap);
+        int count = countProducts(categoryIds, filterFieldsMap);
 
         Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
                 pageRequest,
@@ -119,8 +120,11 @@ public class ProductQueryService {
         return pagedProductDtos;
     }
 
-    public Integer countProducts(Map<Integer, List<Integer>> filterFieldsMap) {
+    public Integer countProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {
         if (filterFieldsMap == null || filterFieldsMap.isEmpty()) {
+            return 0;
+        }
+        if (categoryIds == null) {
             return 0;
         }
 
@@ -140,9 +144,10 @@ public class ProductQueryService {
             // 필터 ID와 필드 ID 문자열을 쌍으로 추가
             filterFieldPairs.put(filterId, fieldIdsString);
         }
-        
+
+        Category category = categoryQueryService.findById(categoryIds.get(0));
         // 한 번에 모든 필터 캐시 조회
-        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(filterFieldPairs);
+        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(category, filterFieldPairs);
         
         // 조회 결과가 없으면 0 반환
         if (caches.isEmpty()) {
@@ -150,11 +155,11 @@ public class ProductQueryService {
         }
         
         // productIds의 길이를 기준으로 정렬 (가장 짧은 것부터)
-        caches.sort((a, b) -> {
-            int aLength = a.getProductIds().split(",").length;
-            int bLength = b.getProductIds().split(",").length;
-            return Integer.compare(aLength, bLength);
-        });
+//        caches.sort((a, b) -> {
+//            int aLength = a.getProductIds().split(",").length;
+//            int bLength = b.getProductIds().split(",").length;
+//            return Integer.compare(aLength, bLength);
+//        });
         
         // 첫 번째 캐시의 상품 ID 목록을 초기 결과로 사용
         Set<Integer> resultProductIds = Arrays.stream(caches.get(0).getProductIds().split(","))
@@ -279,7 +284,7 @@ public class ProductQueryService {
         List<ProductListDto> productDtos = null;
 
         Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
-        int count = countProducts(filterFieldsMap);
+        int count = countProducts(filterFieldsIds, filterFieldsMap);
 
         if (topBarId == 1) {
             productDtos = productQueryRepository.selectNewerProducts(

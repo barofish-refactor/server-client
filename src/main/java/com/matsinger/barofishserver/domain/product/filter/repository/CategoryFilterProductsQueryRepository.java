@@ -1,5 +1,6 @@
 package com.matsinger.barofishserver.domain.product.filter.repository;
 
+import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -17,7 +18,8 @@ import static com.matsinger.barofishserver.domain.product.filter.domain.QCategor
 public class CategoryFilterProductsQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    public List<CategoryFilterProducts> findByFilterIdAndFieldIdsPairs(Map<Integer, String> filterFieldPairs) {
+    public List<CategoryFilterProducts> findByFilterIdAndFieldIdsPairs(Category category, Map<Integer, String> filterFieldPairs) {
+
         List<BooleanExpression> orConditions = new ArrayList<>();
 
         for (Map.Entry<Integer, String> entry : filterFieldPairs.entrySet()) {
@@ -29,7 +31,14 @@ public class CategoryFilterProductsQueryRepository {
 
         return queryFactory
                 .selectFrom(categoryFilterProducts)
-                .where(orConditions.stream().reduce(BooleanExpression::or).orElse(null))
+                .where(orConditions.stream().reduce(BooleanExpression::or).orElse(null)
+                        .and(category.isParent()
+                                ? categoryFilterProducts.categoryId.eq(category.getId())
+                                    .and(categoryFilterProducts.subCategoryId.isNull())
+                                : categoryFilterProducts.categoryId.eq(category.getCategoryId())
+                                    .and(categoryFilterProducts.subCategoryId.eq(category.getId()))
+                        )
+                )
                 .fetch();
     }
 

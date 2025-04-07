@@ -43,26 +43,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 @RequestMapping("/api/v2/product")
 public class ProductControllerV2 {
-
-    private final ProductService productService;
-    private final StoreService storeService;
-    private final CategoryQueryService categoryQueryService;
-    private final CurationCommandService curationCommandService;
-    private final CompareFilterQueryService compareFilterQueryService;
-    private final ProductFilterService productFilterService;
-    private final SearchFilterQueryService searchFilterQueryService;
     private final ProductQueryService productQueryService;
-    private final SearchKeywordQueryService searchKeywordQueryService;
-    private final AddressQueryService addressQueryService;
-    private final DifficultDeliverAddressCommandService difficultDeliverAddressCommandService;
-    private final AdminLogQueryService adminLogQueryService;
-    private final AdminLogCommandService adminLogCommandService;
-    private final AdminQueryService adminQueryService;
     private final JwtService jwt;
 
     private final Common utils;
-
-    private final Uploader s3;
 
     @GetMapping("/list")
     public ResponseEntity<CustomResponse<Page<ProductListDto>>> selectProductListByUserV2(@RequestHeader(value = "Authorization", required = false) Optional<String> auth,
