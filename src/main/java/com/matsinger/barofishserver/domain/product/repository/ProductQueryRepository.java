@@ -464,14 +464,14 @@ public class ProductQueryRepository {
                 .fetch();
     }
 
-    public List<Integer> findCategoryFieldsProduct(int categoryId, List<Integer> fields) {
+    public List<Integer> findCategoryFieldProduct(int categoryId, Integer field) {
         return queryFactory
                 .select(productSearchFilterMap.productId)
                 .from(product)
                 .leftJoin(productSearchFilterMap).on(productSearchFilterMap.productId.eq(product.id))
                 .where(
                         product.category.id.eq(categoryId),
-                        productSearchFilterMap.fieldId.in(fields)
+                        productSearchFilterMap.fieldId.eq(field)
                 )
                 .fetch();
     }

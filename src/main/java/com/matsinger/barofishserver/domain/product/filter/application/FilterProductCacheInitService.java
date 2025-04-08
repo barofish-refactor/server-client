@@ -58,39 +58,30 @@ public class FilterProductCacheInitService {
     public void processSingleCategory(Category category) {
         List<CategorySearchFilterMap> categoryFilterMaps = categorySearchFilterMapRepository.findAllByCategoryId(category.getId());
         List<SearchFilter> categoryFilters = categoryFilterMaps.stream()
-                .map(categoryFilterMap -> categoryFilterMap.getSearchFilter())
+                .map(CategorySearchFilterMap::getSearchFilter)
                 .toList();
 
         for (SearchFilter filter : categoryFilters) {
-                List<Integer> fieldIds = getFieldIdsFromFilter(filter);
-                List<List<Integer>> allFieldCombinations = generateAllFieldCombinations(fieldIds);
+            List<Integer> fieldIds = getFieldIdsFromFilter(filter);
 
-            for (List<Integer> fieldCombination : allFieldCombinations) {
-                if (fieldCombination.isEmpty()) {
-                    continue;
-                }
-
-                Collections.sort(fieldCombination);
-
-                boolean exists = checkIfCombinationExists(category.getCategoryId(), category.getId(), filter.getId(), FilterConverter.convert(fieldCombination));
+            for (Integer fieldId : fieldIds) {
+                boolean exists = checkIfCombinationExists(category.getCategoryId(), category.getId(), filter.getId(), fieldId);
                 if (exists) {
                     return;
                 }
 
-                List<Integer> productIds = category.isParent()
-                    ? productService.findIdsByCategoryIdsInAndFieldIdsIn(
-                        category.getCategoryList().stream()
-                                .map(Category::getId)
-                                .collect(Collectors.toList()),
-                        fieldCombination)
-                    : productQueryRepository.findCategoryFieldsProduct(category.getId(), fieldCombination);
-
-                Collections.sort(productIds);
-                // 저장
                 if (category.isParent()) {
-                    saveFilterProductCache(category.getId(), null, filter, fieldCombination, productIds);
+                    List<Integer> productIds = productService.findIdsByCategoryIdsInAndFieldId(
+                            category.getCategoryList().stream()
+                                    .map(Category::getId)
+                                    .collect(Collectors.toList()),
+                            fieldId);
+                    Collections.sort(productIds);
+                    saveFilterProductCache(category.getId(), null, filter, fieldId, productIds);
                 } else {
-                    saveFilterProductCache(category.getCategoryId(), category.getId(), filter, fieldCombination, productIds);
+                    List<Integer> productIds = productQueryRepository.findCategoryFieldProduct(category.getId(), fieldId);
+                    Collections.sort(productIds);
+                    saveFilterProductCache(category.getCategoryId(), category.getId(), filter, fieldId, productIds);
                 }
             }
         }
@@ -140,20 +131,20 @@ public class FilterProductCacheInitService {
     /**
      * 특정 필터 조합이 이미 존재하는지 확인
      */
-    private boolean checkIfCombinationExists(Integer pCategoryId, Integer cCategoryId, Integer filterId, String fieldString) {
+    private boolean checkIfCombinationExists(Integer pCategoryId, Integer cCategoryId, Integer filterId, Integer field) {
         return categoryFilterProductsRepository
-                .existsByCategoryIdAndSubCategoryIdAndFilterIdAndFieldIds(pCategoryId, cCategoryId, filterId, fieldString);
+                .existsByCategoryIdAndSubCategoryIdAndFilterIdAndFieldId(pCategoryId, cCategoryId, filterId, field);
     }
     
     /**
      * 필터 상품 캐시 저장
      */
     @Transactional
-    public CategoryFilterProducts saveFilterProductCache(
+    public void saveFilterProductCache(
             Integer pCategoryId,
             Integer cCategoryId,
             SearchFilter filter,
-            List<Integer> fieldIds,
+            Integer fieldId,
             List<Integer> productIds
     ) {
 
@@ -161,9 +152,9 @@ public class FilterProductCacheInitService {
                 pCategoryId,
                 cCategoryId,
                 filter.getId(),
-                FilterConverter.convert(fieldIds),
+                fieldId,
                 FilterConverter.convert(productIds)
         );
-        return categoryFilterProductsRepository.save(categoryFilterProducts);
+        categoryFilterProductsRepository.save(categoryFilterProducts);
     }
 } 

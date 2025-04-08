@@ -128,26 +128,9 @@ public class ProductQueryService {
             return 0;
         }
 
-        // 필터 ID와 필드 ID 문자열 쌍을 준비
-        Map<Integer, String> filterFieldPairs = new HashMap<>();
-        
-        // 각 필터의 필드 ID를 문자열로 변환하여 쌍으로 추가
-        for (Map.Entry<Integer, List<Integer>> entry : filterFieldsMap.entrySet()) {
-            Integer filterId = entry.getKey();
-            List<Integer> fieldIds = entry.getValue();
-            
-            // fieldIds를 문자열로 변환 (예: "1,2,3")
-            String fieldIdsString = fieldIds.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-            
-            // 필터 ID와 필드 ID 문자열을 쌍으로 추가
-            filterFieldPairs.put(filterId, fieldIdsString);
-        }
-
         Category category = categoryQueryService.findById(categoryIds.get(0));
         // 한 번에 모든 필터 캐시 조회
-        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(category, filterFieldPairs);
+        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(category, filterFieldsMap);
         
         // 조회 결과가 없으면 0 반환
         if (caches.isEmpty()) {

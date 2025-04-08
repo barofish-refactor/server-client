@@ -28,18 +28,18 @@ public class CategoryFilterProducts {
     @Column(name = "filter_id", nullable = false)
     private Integer filterId;
 
-    @Column(name = "field_ids", nullable = false)
-    private String fieldIds;
+    @Column(name = "field_id", nullable = false)
+    private Integer fieldId;
 
     @Column(name = "product_ids", nullable = false)
     private String productIds;
 
-    public static CategoryFilterProducts from(Integer pCategoryId, Integer cCategoryId, int filterId, String fieldsString, String productsString) {
+    public static CategoryFilterProducts from(Integer pCategoryId, Integer cCategoryId, int filterId, Integer fieldId, String productsString) {
         return CategoryFilterProducts.builder()
                 .categoryId(pCategoryId)
                 .subCategoryId(cCategoryId)
                 .filterId(filterId)
-                .fieldIds(fieldsString)
+                .fieldId(fieldId)
                 .productIds(productsString)
                 .build();
     }

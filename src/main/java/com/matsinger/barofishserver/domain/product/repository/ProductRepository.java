@@ -921,19 +921,13 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
 
     List<Product> findAllByPromotionStartAtBeforeAndPromotionEndAtAfter(Timestamp promotionStart, Timestamp promotionEnd);
 
-    /**
-     * 카테고리 ID 목록과 필드 ID 목록으로 제품 ID 목록을 조회합니다.
-     * @param categoryIds 카테고리 ID 목록
-     * @param fieldIds 필드 ID 목록
-     * @return 제품 ID 목록
-     */
     @Query(value = "SELECT DISTINCT p.id FROM product p " +
             "JOIN category c ON p.category_id = c.id " +
             "JOIN product_search_filter_map psfm ON p.id = psfm.product_id " +
             "WHERE c.id IN (:categoryIds) " +
-            "AND psfm.field_id IN (:fieldIds) " +
+            "AND psfm.field_id = :fieldId " +
             "AND p.state = 'ACTIVE'", nativeQuery = true)
-    List<Integer> findIdsByCategoryIdsInAndFieldIdsIn(
+    List<Integer> findIdsByCategoryIdsInAndFieldId(
             @Param("categoryIds") List<Integer> categoryIds,
-            @Param("fieldIds") List<Integer> fieldIds);
+            @Param("fieldId") Integer fieldId);
 }
