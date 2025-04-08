@@ -671,17 +671,7 @@ public class ProductService {
                 .build();
     }
 
-    public List<Integer> findIdsByFieldIdsIn(List<Integer> fieldCombination) {
-        return productSearchFilterMapRepository.findProductIdsByFieldIdIn(fieldCombination);
-    }
-
-    /**
-     * 카테고리 ID 목록과 필드 ID 목록으로 제품 ID 목록을 조회합니다.
-     * @param categoryIds 카테고리 ID 목록
-     * @param fieldIds 필드 ID 목록
-     * @return 제품 ID 목록
-     */
-    public List<Integer> findIdsByCategoryIdsInAndFieldIdsIn(List<Integer> categoryIds, List<Integer> fieldIds) {
-        return productRepository.findIdsByCategoryIdsInAndFieldIdsIn(categoryIds, fieldIds);
+    public List<Integer> findIdsByCategoryIdsInAndFieldId(List<Integer> categoryIds, Integer fieldId) {
+        return productRepository.findIdsByCategoryIdsInAndFieldId(categoryIds, fieldId);
     }
 }
