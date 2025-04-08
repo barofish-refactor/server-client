@@ -1,6 +1,7 @@
 package com.matsinger.barofishserver.domain.product.filter.api;
 
 import com.matsinger.barofishserver.domain.product.filter.application.FilterProductCacheInitService;
+import com.matsinger.barofishserver.domain.product.infra.redis.RedisBitmapIndexer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class CategoryFilterProductsController {
 
     private final FilterProductCacheInitService filterProductCacheInitService;
+    private final RedisBitmapIndexer redisBitmapIndexer;
 
     /**
      * 필터 상품 캐시 초기화 API
@@ -32,6 +34,12 @@ public class CategoryFilterProductsController {
     @Operation(summary = "필터 상품 캐시 초기화", description = "모든 카테고리, 서브카테고리, 필터에 대한 상품 캐시를 새로 생성합니다.")
     public ResponseEntity<Map<String, Integer>> initializeFilterProductCache() {
         filterProductCacheInitService.initializeFilterProductCaches();
+        return ResponseEntity.ok(null);
+    }
+
+    @PostMapping("/initialize-redis")
+    public ResponseEntity<Map<String, Integer>> initializeFilterProductRedisCache() {
+        redisBitmapIndexer.buildBitmapsInBatches();
         return ResponseEntity.ok(null);
     }
 } 
