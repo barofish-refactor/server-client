@@ -189,7 +189,7 @@ public class ProductQueryRepository {
                                                 String keyword,
                                                 List<Integer> productIds,
                                                 Integer storeId,
-                                                Integer count) {
+                                                Long count) {
 
         OrderSpecifier[] orderSpecifiers = createProductSortSpecifier(sortBy);
         List<ProductListDto> inquiryData = queryFactory
@@ -215,7 +215,7 @@ public class ProductQueryRepository {
                 .leftJoin(category).on(category.id.eq(product.category.id))
                 .where(product.state.eq(ProductState.ACTIVE),
                         eqCuration(curationId),
-                        isPromotionInProgress(),
+//                        isPromotionInProgress(),
                         eqStore(storeId),
                         isProductTitleLikeKeyword(keyword),
                         isIncludedCategory(categoryIds),

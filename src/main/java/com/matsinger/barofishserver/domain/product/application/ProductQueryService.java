@@ -9,6 +9,7 @@ import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsQueryRepository;
+import com.matsinger.barofishserver.domain.product.infra.redis.RedisCategoryFilterResolver;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.product.weeksdate.domain.WeeksDate;
@@ -23,6 +24,7 @@ import com.matsinger.barofishserver.domain.user.application.UserQueryService;
 import com.matsinger.barofishserver.domain.user.domain.User;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
 import java.util.Arrays;
 import java.util.Set;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -54,6 +57,7 @@ public class ProductQueryService {
     private final SearchFilterFieldRepository searchFilterFieldRepository;
     private final CategoryFilterProductsQueryRepository categoryFilterProductsQueryRepository;
     private final CategoryQueryService categoryQueryService;
+    private final RedisCategoryFilterResolver redisResolver;
 
     public Product findById(int productId) {
         return productRepository.findById(productId)
@@ -70,10 +74,18 @@ public class ProductQueryService {
             List<Integer> productIds,
             Integer storeId,
             Integer userId) {
+        if (categoryIds == null) {
+            return null;
+        }
 
         Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
-        int count = countProducts(categoryIds, filterFieldsMap);
+        Category category = categoryQueryService.findById(categoryIds.get(0));
 
+        long countStart = System.currentTimeMillis();
+        Long count = redisResolver.countProduct(category, filterFieldsMap);
+        log.info("레디스 카운팅 시간 = {}", System.currentTimeMillis() - countStart);
+
+        long start2 = System.currentTimeMillis();
         Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
                 pageRequest,
                 sortBy,
@@ -84,14 +96,18 @@ public class ProductQueryService {
                 productIds,
                 storeId,
                 count);
+        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - start2);
 
+        long start3 = System.currentTimeMillis();
         List<Integer> userBasketProductIds = new ArrayList<>();
         if (userId != null) {
             User findedUser = userQueryService.findById(userId);
             userBasketProductIds = basketTastingNoteRepository.findAllByUserId(findedUser.getId())
                     .stream().map(v -> v.getProductId()).toList();
         }
+        log.info("장바구니 조회 시간 = {}", System.currentTimeMillis() - start3);
 
+        long start4 = System.currentTimeMillis();
         for (ProductListDto productDto : pagedProductDtos) {
             if (userBasketProductIds.contains(productDto.getProductId())) {
                 productDto.setIsLike(true);
@@ -99,6 +115,8 @@ public class ProductQueryService {
             productDto.convertImageUrlsToFirstUrl();
             productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
         }
+        log.info("dto 변환 시간 = {}", System.currentTimeMillis() - start4);
+
 
         // productIds의 순서에 따라 제품을 정렬
 //        List<ProductListDto> sortedProducts = productIds.stream()
