@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductRecommendCacheRepository extends JpaRepository<ProductRecommendCache, Integer> {
-} 
+    boolean existsByCategoryIdAndSubCategoryId(Integer pCategoryId, Integer cCategoryId);
+}
