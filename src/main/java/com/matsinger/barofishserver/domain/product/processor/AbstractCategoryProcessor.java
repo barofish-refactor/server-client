@@ -2,15 +2,15 @@ package com.matsinger.barofishserver.domain.product.processor;
 
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.category.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 @Slf4j
-@RequiredArgsConstructor
 public abstract class AbstractCategoryProcessor {
-    protected final CategoryRepository categoryRepository;
+    @Autowired
+    protected CategoryRepository categoryRepository;
 
     public void processCategories() {
         try {

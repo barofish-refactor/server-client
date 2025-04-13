@@ -12,6 +12,7 @@ import com.matsinger.barofishserver.domain.product.repository.ProductQueryReposi
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,20 +25,13 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilterProductCacheInitService extends AbstractCategoryProcessor {
 
     private final ProductService productService;
     private final ProductQueryRepository productQueryRepository;
     private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final CategorySearchFilterMapRepository categorySearchFilterMapRepository;
-
-    public FilterProductCacheInitService(ProductService productService, ProductQueryRepository productQueryRepository, CategoryFilterProductsRepository categoryFilterProductsRepository, CategorySearchFilterMapRepository categorySearchFilterMapRepository, CategoryRepository categoryRepository) {
-        super(categoryRepository);
-        this.productService = productService;
-        this.productQueryRepository = productQueryRepository;
-        this.categoryFilterProductsRepository = categoryFilterProductsRepository;
-        this.categorySearchFilterMapRepository = categorySearchFilterMapRepository;
-    }
 
     @Transactional
     @Override
