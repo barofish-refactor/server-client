@@ -1,7 +1,7 @@
 package com.matsinger.barofishserver.domain.product.filter.api;
 
 import com.matsinger.barofishserver.domain.product.filter.application.FilterProductCacheInitService;
-import com.matsinger.barofishserver.domain.product.infra.redis.RedisBitmapIndexer;
+import com.matsinger.barofishserver.domain.product.filter.infra.redis.RedisBitmapIndexer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

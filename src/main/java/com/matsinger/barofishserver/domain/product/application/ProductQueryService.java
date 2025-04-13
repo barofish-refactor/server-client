@@ -9,7 +9,7 @@ import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsQueryRepository;
-import com.matsinger.barofishserver.domain.product.infra.redis.RedisCategoryFilterResolver;
+import com.matsinger.barofishserver.domain.product.filter.infra.redis.RedisCategoryFilterResolver;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.product.weeksdate.domain.WeeksDate;

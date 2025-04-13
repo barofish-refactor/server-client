@@ -1,4 +1,4 @@
-package com.matsinger.barofishserver.domain.product.infra.redis;
+package com.matsinger.barofishserver.domain.product.filter.infra.redis;
 
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
