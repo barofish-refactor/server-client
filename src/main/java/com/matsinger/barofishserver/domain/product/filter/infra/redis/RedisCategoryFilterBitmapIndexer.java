@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RedisBitmapIndexer {
+public class RedisCategoryFilterBitmapIndexer {
     private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final StringRedisTemplate redis;
 
