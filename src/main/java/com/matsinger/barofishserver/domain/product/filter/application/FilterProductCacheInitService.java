@@ -4,14 +4,14 @@ import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.category.domain.CategorySearchFilterMap;
 import com.matsinger.barofishserver.domain.category.repository.CategoryRepository;
 import com.matsinger.barofishserver.domain.category.repository.CategorySearchFilterMapRepository;
-import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
-import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.product.filter.utils.FilterConverter;
+import com.matsinger.barofishserver.domain.product.processor.AbstractCategoryProcessor;
+import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
+import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,38 +24,24 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class FilterProductCacheInitService {
+public class FilterProductCacheInitService extends AbstractCategoryProcessor {
 
     private final ProductService productService;
     private final ProductQueryRepository productQueryRepository;
     private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final CategorySearchFilterMapRepository categorySearchFilterMapRepository;
-    private final CategoryRepository categoryRepository;
 
-    /**
-     * 모든 카테고리에 대한 필터 상품 캐시 초기화
-     */
-    public void initializeFilterProductCaches() {
-        try {
-            List<Category> pCategories = categoryRepository.findAllByCategoryIdIsNull();
-            for (Category pCategory : pCategories) {
-                for (Category cCategory : pCategory.getCategoryList()) {
-                    processSingleCategory(cCategory);
-                }
-                processSingleCategory(pCategory);
-            }
-        } catch (Exception e) {
-            log.error("필터 상품 캐시 초기화 중 오류 발생", e);
-            throw e;
-        }
+    public FilterProductCacheInitService(ProductService productService, ProductQueryRepository productQueryRepository, CategoryFilterProductsRepository categoryFilterProductsRepository, CategorySearchFilterMapRepository categorySearchFilterMapRepository, CategoryRepository categoryRepository) {
+        super(categoryRepository);
+        this.productService = productService;
+        this.productQueryRepository = productQueryRepository;
+        this.categoryFilterProductsRepository = categoryFilterProductsRepository;
+        this.categorySearchFilterMapRepository = categorySearchFilterMapRepository;
     }
 
-    /**
-     * 특정 카테고리와 필터에 대한 필터 상품 캐시 초기화
-     */
     @Transactional
-    public void processSingleCategory(Category category) {
+    @Override
+    public void processCategory(Category category) {
         List<CategorySearchFilterMap> categoryFilterMaps = categorySearchFilterMapRepository.findAllByCategoryId(category.getId());
         List<SearchFilter> categoryFilters = categoryFilterMaps.stream()
                 .map(CategorySearchFilterMap::getSearchFilter)
