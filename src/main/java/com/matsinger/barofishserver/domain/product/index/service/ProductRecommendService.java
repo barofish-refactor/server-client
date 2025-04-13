@@ -13,12 +13,12 @@ public class ProductRecommendService {
     private final ProductRecommendRepository productRecommendRepository;
 
     @Transactional(readOnly = true)
-    public List<Integer> findProductIdsByCategoryIds(List<Integer> categoryIds) {
-        return productRecommendRepository.findProductIdsByCategoryIds(categoryIds);
+    public List<Integer> findProductIdsByCategoryIdsOrderByWeightDesc(List<Integer> categoryIds) {
+        return productRecommendRepository.findProductIdsByCategoryIdsOrderByWeightDesc(categoryIds);
     }
 
     @Transactional(readOnly = true)
-    public List<Integer> findProductIdsByCategoryId(int categoryId) {
-        return productRecommendRepository.findProductIdsByCategoryId(categoryId);
+    public List<Integer> findProductIdsByCategoryIdOrderByWeightDesc(int categoryId) {
+        return productRecommendRepository.findProductIdsByCategoryIdOrderByWeightDesc(categoryId);
     }
 }

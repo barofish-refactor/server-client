@@ -15,7 +15,7 @@ public class ProductRecommend {
     private ProductRecommendId id;
 
     @Column(nullable = false)
-    private Float weight;
+    private Integer weight;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
