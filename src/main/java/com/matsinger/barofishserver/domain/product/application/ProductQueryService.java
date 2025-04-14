@@ -8,8 +8,8 @@ import com.matsinger.barofishserver.domain.product.dto.ExpectedArrivalDateRespon
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
+import com.matsinger.barofishserver.domain.product.infra.redis.ProductFilterSortRedisResolver;
 import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsQueryRepository;
-import com.matsinger.barofishserver.domain.product.filter.infra.redis.RedisCategoryFilterResolver;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.product.weeksdate.domain.WeeksDate;
@@ -38,9 +38,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.util.Arrays;
-import java.util.Set;
-
 @Slf4j
 @Service
 @Transactional(readOnly = true)
@@ -57,7 +54,7 @@ public class ProductQueryService {
     private final SearchFilterFieldRepository searchFilterFieldRepository;
     private final CategoryFilterProductsQueryRepository categoryFilterProductsQueryRepository;
     private final CategoryQueryService categoryQueryService;
-    private final RedisCategoryFilterResolver redisResolver;
+    private final ProductFilterSortRedisResolver productFilterSortRedisResolver;
 
     public Product findById(int productId) {
         return productRepository.findById(productId)
@@ -69,10 +66,6 @@ public class ProductQueryService {
             ProductSortBy sortBy,
             List<Integer> categoryIds,
             List<Integer> filterFieldIds,
-            Integer curationId,
-            String keyword,
-            List<Integer> productIds,
-            Integer storeId,
             Integer userId) {
         if (categoryIds == null) {
             return null;
@@ -82,33 +75,43 @@ public class ProductQueryService {
         Category category = categoryQueryService.findById(categoryIds.get(0));
 
         long countStart = System.currentTimeMillis();
-        Long count = redisResolver.countProduct(category, filterFieldsMap);
-        log.info("레디스 카운팅 시간 = {}", System.currentTimeMillis() - countStart);
+        byte[] filteredProductsBits = productFilterSortRedisResolver.getFilteredProductsBits(category, filterFieldsMap);
+        log.info("필터링된 상품 조회 시간 = {}", System.currentTimeMillis() - countStart);
 
         long start2 = System.currentTimeMillis();
-        Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
-                pageRequest,
-                sortBy,
-                categoryIds,
-                filterFieldsMap,
-                curationId,
-                keyword,
-                productIds,
-                storeId,
-                count);
-        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - start2);
+        String sortedProductIdsString = productFilterSortRedisResolver.getSortedProductIds(category, sortBy);
+        List<Integer> sortedProductIds = Arrays.stream(sortedProductIdsString.split(","))
+                .map(Integer::parseInt).toList();
+        log.info("정렬된 상품 조회 시간 = {}", System.currentTimeMillis() - start2);
 
         long start3 = System.currentTimeMillis();
+        List<Integer> result = new ArrayList<>();
+        for (int productId : sortedProductIds) {
+            if (isBitSet(filteredProductsBits, productId)) {
+                result.add(productId);
+            }
+        }
+        log.info("and 연산 시간 = {}", System.currentTimeMillis() - start3);
+
+        int start = (int) pageRequest.getOffset(); // page * size
+        int end = Math.min(start + pageRequest.getPageSize(), result.size());
+        List<Integer> paged = result.subList(start, end);
+
+
+        List<Product> products = productRepository.findAllById(paged);
+        List<ProductListDto> productDtos = ProductListDto.listFrom(products);
+
+        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - start2);
+
         List<Integer> userBasketProductIds = new ArrayList<>();
         if (userId != null) {
             User findedUser = userQueryService.findById(userId);
             userBasketProductIds = basketTastingNoteRepository.findAllByUserId(findedUser.getId())
                     .stream().map(v -> v.getProductId()).toList();
         }
-        log.info("장바구니 조회 시간 = {}", System.currentTimeMillis() - start3);
 
         long start4 = System.currentTimeMillis();
-        for (ProductListDto productDto : pagedProductDtos) {
+        for (ProductListDto productDto : productDtos) {
             if (userBasketProductIds.contains(productDto.getProductId())) {
                 productDto.setIsLike(true);
             }
@@ -135,7 +138,18 @@ public class ProductQueryService {
 //        List<ProductListDto> subList = sortedProducts.subList(offset, pageSize);
 
 
-        return pagedProductDtos;
+        return new PageImpl<>(
+                productDtos,                  // 페이지 내용 (상품 목록)
+                pageRequest,               // 원래의 PageRequest
+                result.size()  // 총 요소 수
+        );
+    }
+
+    public boolean isBitSet(byte[] bitmap, int bitIndex) {
+        int byteIndex = bitIndex / 8;
+        int bitOffset = 7 - (bitIndex % 8); // Redis는 big-endian
+        return byteIndex < bitmap.length &&
+                ((bitmap[byteIndex] >> bitOffset) & 1) == 1;
     }
 
     public Integer countProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {

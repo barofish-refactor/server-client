@@ -181,55 +181,6 @@ public class ProductQueryRepository {
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
     }
 
-    public PageImpl<ProductListDto> getProducts(PageRequest pageRequest,
-                                                ProductSortBy sortBy,
-                                                List<Integer> categoryIds,
-                                                Map<Integer, List<Integer>> filterFieldsMap,
-                                                Integer curationId,
-                                                String keyword,
-                                                List<Integer> productIds,
-                                                Integer storeId,
-                                                Long count) {
-
-        OrderSpecifier[] orderSpecifiers = createProductSortSpecifier(sortBy);
-        List<ProductListDto> inquiryData = queryFactory
-                .select(Projections.fields(
-                        ProductListDto.class,
-                        product.id.as("id"),
-                        product.state.as("state"),
-                        product.images.as("image"),
-                        product.title.as("title"),
-                        product.needTaxation.as("isNeedTaxation"),
-                        optionItem.discountPrice.as("discountPrice"),
-                        optionItem.originPrice.as("originPrice"),
-                        storeInfo.storeId.as("storeId"),
-                        storeInfo.name.as("storeName"),
-                        product.minOrderPrice.as("minOrderPrice"),
-                        storeInfo.profileImage.as("storeImage"),
-                        product.deliverFeeType.as("delieverFeeType"),
-                        category.parentCategory.id.as("parentCategoryId")
-                ))
-                .from(product)
-                .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
-                .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .leftJoin(category).on(category.id.eq(product.category.id))
-                .where(product.state.eq(ProductState.ACTIVE),
-                        eqCuration(curationId),
-//                        isPromotionInProgress(),
-                        eqStore(storeId),
-                        isProductTitleLikeKeyword(keyword),
-                        isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldsMap)
-                )
-                .groupBy(product.id)
-                .orderBy(orderSpecifiers)
-                .offset(pageRequest.getOffset())
-                .limit(pageRequest.getPageSize())
-                .fetch();
-
-        return new PageImpl<>(inquiryData, pageRequest, count);
-    }
-
     private BooleanExpression matches(StringPath storeName, String[] keywords) {
         BooleanExpression keywordMatchesStoreName = null;
         for (String keyword : keywords) {
