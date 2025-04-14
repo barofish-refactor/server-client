@@ -28,4 +28,8 @@ public class ProductRecommendCacheService {
     public List<ProductRecommendCache> findAll(PageRequest pageRequest) {
         return productRecommendCacheRepository.findAll(pageRequest).getContent();
     }
+
+    public boolean existsByCategoryIdAndSubCategoryId(Integer pCategoryId, Integer cCategoryId) {
+        return productRecommendCacheRepository.existsByCategoryIdAndSubCategoryId(pCategoryId, cCategoryId);
+    }
 }

@@ -25,14 +25,23 @@ public class ProductIndexInitService extends AbstractCategoryProcessor {
     @Transactional
     public void processCategory(Category category) {
         if (category.isParent()) {
+            if (exists(category.getId(), null)) return;
+
             List<Integer> categoryIds = category.getCategoryList().stream()
                     .map(Category::getId)
                     .collect(Collectors.toList());
-            List<Integer> productIds = productRecommendService.findProductIdsByCategoryIds(categoryIds);
+
+            List<Integer> productIds = productRecommendService.findProductIdsByCategoryIdsOrderByWeightDesc(categoryIds);
             productRecommendCacheService.saveRecommendCache(category.getId(), null, FilterConverter.convert(productIds));
         } else {
-            List<Integer> productIds = productRecommendService.findProductIdsByCategoryId(category.getId());
+            if (exists(category.getCategoryId(), category.getId())) return;
+
+            List<Integer> productIds = productRecommendService.findProductIdsByCategoryIdOrderByWeightDesc(category.getId());
             productRecommendCacheService.saveRecommendCache(category.getCategoryId(), category.getId(), FilterConverter.convert(productIds));
         }
+    }
+
+    private boolean exists(Integer pCategoryId, Integer cCategoryId) {
+        return productRecommendCacheService.existsByCategoryIdAndSubCategoryId(pCategoryId, cCategoryId);
     }
 }
