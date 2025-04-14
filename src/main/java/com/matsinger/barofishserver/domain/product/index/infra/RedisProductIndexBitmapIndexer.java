@@ -31,12 +31,14 @@ public class RedisProductIndexBitmapIndexer {
                 StringRedisConnection stringConn = (StringRedisConnection) connection;
                 for (ProductRecommendCache productRecommendCache : productRecommendCaches) {
                     String redisKey = String.format("product-recommend:%s:%s", productRecommendCache.getCategoryId(), productRecommendCache.getSubCategoryId());
+
                     List<String> productIdsStr = FilterConverter.splitCsv(productRecommendCache.getProductIds());
 
-                    for (String productIdStr : productIdsStr) {
-                        long productId = Long.parseLong(productIdStr);
-                        stringConn.setBit(redisKey, productId, true);
-                    }
+                    // CSV 문자열로 변환
+                    String csv = String.join(",", productIdsStr);
+
+                    // Redis에 저장
+                    stringConn.set(redisKey, csv);
                 }
 
                 return null;
