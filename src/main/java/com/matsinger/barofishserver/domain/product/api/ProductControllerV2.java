@@ -76,10 +76,6 @@ public class ProductControllerV2 {
                 sortBy,
                 utils.str2IntList(categoryIds),
                 utils.str2IntList(filterFieldIds),
-                curationId,
-                keyword,
-                integerProductIds,
-                storeId,
                 userId);
 
         res.setData(Optional.ofNullable(result));
