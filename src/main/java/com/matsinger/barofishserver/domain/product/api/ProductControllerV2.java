@@ -83,21 +83,18 @@ public class ProductControllerV2 {
     }
 
     @GetMapping("/list/count")
-    public ResponseEntity<CustomResponse<Integer>> selectProductCountByUserV2(@RequestHeader(value = "Authorization", required = false) Optional<String> auth,
+    public ResponseEntity<CustomResponse<Long>> selectProductCountByUserV2(@RequestHeader(value = "Authorization", required = false) Optional<String> auth,
                                                                               @RequestParam(value = "categoryIds", required = false) String categoryIds,
                                                                               @RequestParam(value = "filterFieldIds", required = false) String filterFieldIds,
                                                                               @RequestParam(value = "curationId", required = false) Integer curationId,
                                                                               @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
                                                                               @RequestParam(value = "storeId", required = false) Integer storeId) {
-        CustomResponse<Integer> response = new CustomResponse<>();
+        CustomResponse<Long> response = new CustomResponse<>();
         jwt.validateAndGetTokenInfo(Set.of(TokenAuthType.ALLOW), auth);
 
-        int count = productQueryService.countProducts(
+        Long count = productQueryService.countProducts(
                 utils.str2IntList(categoryIds),
-                utils.str2IntList(filterFieldIds),
-                curationId,
-                keyword,
-                storeId);
+                utils.str2IntList(filterFieldIds));
         response.setIsSuccess(true);
         response.setData(Optional.of(count));
 
