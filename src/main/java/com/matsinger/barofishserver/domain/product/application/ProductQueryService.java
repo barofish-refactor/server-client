@@ -25,6 +25,7 @@ import com.matsinger.barofishserver.domain.user.domain.User;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,7 +53,6 @@ public class ProductQueryService {
     private final ReviewQueryRepository reviewQueryRepository;
     private final ReviewQueryService reviewQueryService;
     private final SearchFilterFieldRepository searchFilterFieldRepository;
-    private final CategoryFilterProductsQueryRepository categoryFilterProductsQueryRepository;
     private final CategoryQueryService categoryQueryService;
     private final ProductFilterSortRedisResolver productFilterSortRedisResolver;
 
@@ -75,33 +75,13 @@ public class ProductQueryService {
         Category category = categoryQueryService.findById(categoryIds.get(0));
 
         long countStart = System.currentTimeMillis();
-        byte[] filteredProductsBits = productFilterSortRedisResolver.getFilteredProductsBits(category, filterFieldsMap);
-        log.info("필터링된 상품 조회 시간 = {}", System.currentTimeMillis() - countStart);
+        List<Integer> filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(category, sortBy, filterFieldsMap);
+        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - countStart);
 
-        long start2 = System.currentTimeMillis();
-        String sortedProductIdsString = productFilterSortRedisResolver.getSortedProductIds(category, sortBy);
-        List<Integer> sortedProductIds = Arrays.stream(sortedProductIdsString.split(","))
-                .map(Integer::parseInt).toList();
-        log.info("정렬된 상품 조회 시간 = {}", System.currentTimeMillis() - start2);
+        List<Integer> slicedProductIds = slice(pageRequest, filteredSortedProductIds);
 
-        long start3 = System.currentTimeMillis();
-        List<Integer> result = new ArrayList<>();
-        for (int productId : sortedProductIds) {
-            if (isBitSet(filteredProductsBits, productId)) {
-                result.add(productId);
-            }
-        }
-        log.info("and 연산 시간 = {}", System.currentTimeMillis() - start3);
-
-        int start = (int) pageRequest.getOffset(); // page * size
-        int end = Math.min(start + pageRequest.getPageSize(), result.size());
-        List<Integer> paged = result.subList(start, end);
-
-
-        List<Product> products = productRepository.findAllById(paged);
+        List<Product> products = productRepository.findAllById(slicedProductIds);
         List<ProductListDto> productDtos = ProductListDto.listFrom(products);
-
-        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - start2);
 
         List<Integer> userBasketProductIds = new ArrayList<>();
         if (userId != null) {
@@ -120,101 +100,59 @@ public class ProductQueryService {
         }
         log.info("dto 변환 시간 = {}", System.currentTimeMillis() - start4);
 
-
-        // productIds의 순서에 따라 제품을 정렬
-//        List<ProductListDto> sortedProducts = productIds.stream()
-//                .map(id -> pagedProductDtos.stream()
-//                        .filter(p -> p.getId().equals(id)).findFirst().orElse(null))
-//                .collect(Collectors.toList());
-//
-//        int offset = (int) pageRequest.getOffset();
-//        int pageSize = pageRequest.getPageSize();
-//        if (pageSize > sortedProducts.size()) {
-//            pageSize = sortedProducts.size();
-//        }
-//        if (offset > sortedProducts.size()) {
-//            offset = sortedProducts.size();
-//        }
-//        List<ProductListDto> subList = sortedProducts.subList(offset, pageSize);
-
-
         return new PageImpl<>(
                 productDtos,                  // 페이지 내용 (상품 목록)
                 pageRequest,               // 원래의 PageRequest
-                result.size()  // 총 요소 수
+                filteredSortedProductIds.size()  // 총 요소 수
         );
     }
 
-    public boolean isBitSet(byte[] bitmap, int bitIndex) {
-        int byteIndex = bitIndex / 8;
-        int bitOffset = 7 - (bitIndex % 8); // Redis는 big-endian
-        return byteIndex < bitmap.length &&
-                ((bitmap[byteIndex] >> bitOffset) & 1) == 1;
+    @NotNull
+    private static List<Integer> slice(PageRequest pageRequest, List<Integer> filteredSortedProductIds) {
+        int start = (int) pageRequest.getOffset(); // page * size
+        int end = Math.min(start + pageRequest.getPageSize(), filteredSortedProductIds.size());
+        List<Integer> paged = filteredSortedProductIds.subList(start, end);
+        return paged;
     }
 
-    public Integer countProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {
-        if (filterFieldsMap == null || filterFieldsMap.isEmpty()) {
-            return 0;
+    public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
+                                                        PageRequest pageRequest,
+                                                        List<Integer> filterFieldsIds) {
+        List<Integer> filteredSortedProductIds = null;
+
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+
+        if (topBarId == 1) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.NEW, filterFieldsMap);
         }
-        if (categoryIds == null) {
-            return 0;
+        if (topBarId == 2) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.REVIEW, filterFieldsMap);
+        }
+        if (topBarId == 3) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.DISCOUNT, filterFieldsMap);
         }
 
-        Category category = categoryQueryService.findById(categoryIds.get(0));
-        // 한 번에 모든 필터 캐시 조회
-        List<CategoryFilterProducts> caches = categoryFilterProductsQueryRepository.findByFilterIdAndFieldIdsPairs(category, filterFieldsMap);
-        
-        // 조회 결과가 없으면 0 반환
-        if (caches.isEmpty()) {
-            return 0;
+        List<Integer> slicedProductIds = slice(pageRequest, filteredSortedProductIds);
+        List<Product> products = productRepository.findAllById(slicedProductIds);
+        List<ProductListDto> productListDtos = ProductListDto.listFrom(products);
+
+        for (ProductListDto productDto : productListDtos) {
+            // 여러개 이미지 중 하나로 세팅
+            productDto.convertImageUrlsToFirstUrl();
+            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
         }
-        
-        // productIds의 길이를 기준으로 정렬 (가장 짧은 것부터)
-//        caches.sort((a, b) -> {
-//            int aLength = a.getProductIds().split(",").length;
-//            int bLength = b.getProductIds().split(",").length;
-//            return Integer.compare(aLength, bLength);
-//        });
-        
-        // 첫 번째 캐시의 상품 ID 목록을 초기 결과로 사용
-        Set<Integer> resultProductIds = Arrays.stream(caches.get(0).getProductIds().split(","))
-                .map(Integer::parseInt)
-                .collect(Collectors.toSet());
-        
-        // 나머지 캐시들과 AND 연산 수행
-        for (int i = 1; i < caches.size(); i++) {
-            Set<Integer> currentProductIds = Arrays.stream(caches.get(i).getProductIds().split(","))
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toSet());
-            
-            // AND 연산 수행 (교집합)
-            resultProductIds.retainAll(currentProductIds);
-            
-            // 중간 결과가 비어있으면 더 이상 진행할 필요 없음
-            if (resultProductIds.isEmpty()) {
-                return 0;
-            }
-        }
-        
-        return resultProductIds.size();
+
+        return new PageImpl<>(productListDtos, pageRequest, filteredSortedProductIds.size());
     }
 
-    public int countProducts(
+    public Long countProducts(
             List<Integer> categoryIds,
-            List<Integer> filterFieldIds,
-            Integer curationId,
-            String keyword,
-            Integer storeId) {
+            List<Integer> filterFieldIds) {
 
         Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
+        Category category = categoryQueryService.findById(categoryIds.get(0));
 
-        return productQueryRepository.countProducts(
-                categoryIds,
-                filterFieldsMap,
-                curationId,
-                keyword,
-                null,
-                storeId);
+        return productFilterSortRedisResolver.getFilteredProductCnt(category, filterFieldsMap);
     }
 
     public ExpectedArrivalDateResponse getExpectedArrivalDate(LocalDateTime now, Integer productId) {
@@ -293,36 +231,6 @@ public class ProductQueryService {
         return expectedArrivalDate;
     }
 
-    public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
-                                                        PageRequest pageRequest,
-                                                        List<Integer> filterFieldsIds) {
-        List<ProductListDto> productDtos = null;
-
-        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
-        int count = countProducts(filterFieldsIds, filterFieldsMap);
-
-        if (topBarId == 1) {
-            productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, filterFieldsMap, count);
-        }
-        if (topBarId == 2) {
-            productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, filterFieldsMap, count);
-        }
-        if (topBarId == 3) {
-            productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, filterFieldsMap, count);
-        }
-
-//        for (ProductListDto productDto : productDtos) {
-//            // 여러개 이미지 중 하나로 세팅
-//            productDto.convertImageUrlsToFirstUrl();
-//            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
-//        }
-
-        return new PageImpl<>(productDtos, pageRequest, count);
-    }
-
     private Map<Integer, List<Integer>> createFilterFieldsMap(List<Integer> filterFieldsIds) {
         List<SearchFilterField> searchFilterFields = null;
         if (filterFieldsIds == null) {
@@ -346,24 +254,16 @@ public class ProductQueryService {
         return filterAndFieldMapper;
     }
 
-    public Integer countTopBarProduct(Integer topBarId,
+    public Long countTopBarProduct(Integer topBarId,
                                       List<Integer> filterFieldsIds,
                                       List<Integer> categoryIds) {
 
         Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+        Category category = categoryIds == null
+                ? null
+                : categoryQueryService.findById(categoryIds.get(0));
 
-        if (topBarId == 1) {
-            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsMap);
-        }
-        if (topBarId == 2) {
-            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsMap);
-        }
-        if (topBarId == 3) {
-            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsMap);
-        }
-
-
-        throw new BusinessException("탑바를 찾을 수 없습니다.");
+        return productFilterSortRedisResolver.getFilteredProductCnt(category, filterFieldsMap);
     }
 
     public List<ProductPhotoReviewDto> getProductPictures(Integer productId) {

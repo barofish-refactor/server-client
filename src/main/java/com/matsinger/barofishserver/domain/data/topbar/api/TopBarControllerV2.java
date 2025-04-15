@@ -50,7 +50,7 @@ public class TopBarControllerV2 {
                                                                   @RequestParam(value = "filterFieldIds", required = false) String filterFieldIds) {
         CustomResponse<Long> response = new CustomResponse<>();
 
-        Long count = (long) productQueryService.countTopBarProduct(
+        Long count = productQueryService.countTopBarProduct(
                 id,
                 utils.str2IntList(filterFieldIds),
                 utils.str2IntList(categoryIds)
