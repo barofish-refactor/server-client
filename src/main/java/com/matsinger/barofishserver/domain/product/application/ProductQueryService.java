@@ -1,10 +1,15 @@
 package com.matsinger.barofishserver.domain.product.application;
 
+import com.matsinger.barofishserver.domain.category.application.CategoryQueryService;
+import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.dto.ExpectedArrivalDateResponse;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
 import com.matsinger.barofishserver.domain.product.dto.ProductPhotoReviewDto;
+import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
+import com.matsinger.barofishserver.domain.product.infra.redis.ProductFilterSortRedisResolver;
+import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.product.repository.ProductRepository;
 import com.matsinger.barofishserver.domain.product.weeksdate.domain.WeeksDate;
@@ -12,11 +17,15 @@ import com.matsinger.barofishserver.domain.product.weeksdate.repository.WeeksDat
 import com.matsinger.barofishserver.domain.review.application.ReviewQueryService;
 import com.matsinger.barofishserver.domain.review.dto.ProductReviewPictureInquiryDto;
 import com.matsinger.barofishserver.domain.review.repository.ReviewQueryRepository;
+import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
+import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
 import com.matsinger.barofishserver.domain.tastingNote.basketTastingNote.repository.BasketTastingNoteRepository;
 import com.matsinger.barofishserver.domain.user.application.UserQueryService;
 import com.matsinger.barofishserver.domain.user.domain.User;
 import com.matsinger.barofishserver.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,11 +36,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -44,6 +52,9 @@ public class ProductQueryService {
     private final BasketTastingNoteRepository basketTastingNoteRepository;
     private final ReviewQueryRepository reviewQueryRepository;
     private final ReviewQueryService reviewQueryService;
+    private final SearchFilterFieldRepository searchFilterFieldRepository;
+    private final CategoryQueryService categoryQueryService;
+    private final ProductFilterSortRedisResolver productFilterSortRedisResolver;
 
     public Product findById(int productId) {
         return productRepository.findById(productId)
@@ -55,21 +66,22 @@ public class ProductQueryService {
             ProductSortBy sortBy,
             List<Integer> categoryIds,
             List<Integer> filterFieldIds,
-            Integer curationId,
-            String keyword,
-            List<Integer> productIds,
-            Integer storeId,
             Integer userId) {
+        if (categoryIds == null) {
+            return null;
+        }
 
-        Page<ProductListDto> pagedProductDtos = productQueryRepository.getProducts(
-                pageRequest,
-                sortBy,
-                categoryIds,
-                filterFieldIds,
-                curationId,
-                keyword,
-                productIds,
-                storeId);
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
+        Category category = categoryQueryService.findById(categoryIds.get(0));
+
+        long countStart = System.currentTimeMillis();
+        List<Integer> filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(category, sortBy, filterFieldsMap);
+        log.info("상품 조회 시간 = {}", System.currentTimeMillis() - countStart);
+
+        List<Integer> slicedProductIds = slice(pageRequest, filteredSortedProductIds);
+
+        List<Product> products = productRepository.findAllById(slicedProductIds);
+        List<ProductListDto> productDtos = ProductListDto.listFrom(products);
 
         List<Integer> userBasketProductIds = new ArrayList<>();
         if (userId != null) {
@@ -78,48 +90,69 @@ public class ProductQueryService {
                     .stream().map(v -> v.getProductId()).toList();
         }
 
-        for (ProductListDto productDto : pagedProductDtos) {
+        long start4 = System.currentTimeMillis();
+        for (ProductListDto productDto : productDtos) {
             if (userBasketProductIds.contains(productDto.getProductId())) {
                 productDto.setIsLike(true);
             }
             productDto.convertImageUrlsToFirstUrl();
             productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
         }
+        log.info("dto 변환 시간 = {}", System.currentTimeMillis() - start4);
 
-        // productIds의 순서에 따라 제품을 정렬
-//        List<ProductListDto> sortedProducts = productIds.stream()
-//                .map(id -> pagedProductDtos.stream()
-//                        .filter(p -> p.getId().equals(id)).findFirst().orElse(null))
-//                .collect(Collectors.toList());
-//
-//        int offset = (int) pageRequest.getOffset();
-//        int pageSize = pageRequest.getPageSize();
-//        if (pageSize > sortedProducts.size()) {
-//            pageSize = sortedProducts.size();
-//        }
-//        if (offset > sortedProducts.size()) {
-//            offset = sortedProducts.size();
-//        }
-//        List<ProductListDto> subList = sortedProducts.subList(offset, pageSize);
-
-
-        return pagedProductDtos;
+        return new PageImpl<>(
+                productDtos,                  // 페이지 내용 (상품 목록)
+                pageRequest,               // 원래의 PageRequest
+                filteredSortedProductIds.size()  // 총 요소 수
+        );
     }
 
-    public int countProducts(
-            List<Integer> categoryIds,
-            List<Integer> filterFieldIds,
-            Integer curationId,
-            String keyword,
-            Integer storeId) {
+    @NotNull
+    private static List<Integer> slice(PageRequest pageRequest, List<Integer> filteredSortedProductIds) {
+        int start = (int) pageRequest.getOffset(); // page * size
+        int end = Math.min(start + pageRequest.getPageSize(), filteredSortedProductIds.size());
+        List<Integer> paged = filteredSortedProductIds.subList(start, end);
+        return paged;
+    }
 
-        return productQueryRepository.countProducts(
-                categoryIds,
-                filterFieldIds,
-                curationId,
-                keyword,
-                null,
-                storeId);
+    public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
+                                                        PageRequest pageRequest,
+                                                        List<Integer> filterFieldsIds) {
+        List<Integer> filteredSortedProductIds = null;
+
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+
+        if (topBarId == 1) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.NEW, filterFieldsMap);
+        }
+        if (topBarId == 2) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.REVIEW, filterFieldsMap);
+        }
+        if (topBarId == 3) {
+            filteredSortedProductIds = productFilterSortRedisResolver.getFilteredSortedProductIds(null, ProductSortBy.DISCOUNT, filterFieldsMap);
+        }
+
+        List<Integer> slicedProductIds = slice(pageRequest, filteredSortedProductIds);
+        List<Product> products = productRepository.findAllById(slicedProductIds);
+        List<ProductListDto> productListDtos = ProductListDto.listFrom(products);
+
+        for (ProductListDto productDto : productListDtos) {
+            // 여러개 이미지 중 하나로 세팅
+            productDto.convertImageUrlsToFirstUrl();
+            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
+        }
+
+        return new PageImpl<>(productListDtos, pageRequest, filteredSortedProductIds.size());
+    }
+
+    public Long countProducts(
+            List<Integer> categoryIds,
+            List<Integer> filterFieldIds) {
+
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldIds);
+        Category category = categoryQueryService.findById(categoryIds.get(0));
+
+        return productFilterSortRedisResolver.getFilteredProductCnt(category, filterFieldsMap);
     }
 
     public ExpectedArrivalDateResponse getExpectedArrivalDate(LocalDateTime now, Integer productId) {
@@ -198,48 +231,39 @@ public class ProductQueryService {
         return expectedArrivalDate;
     }
 
-    public Page<ProductListDto> selectTopBarProductList(Integer topBarId,
-                                                        PageRequest pageRequest,
-                                                        List<Integer> filterFieldsIds) {
-        PageImpl<ProductListDto> productDtos = null;
-
-        if (topBarId == 1) {
-            productDtos = productQueryRepository.selectNewerProducts(
-                    pageRequest, filterFieldsIds);
-        }
-        if (topBarId == 2) {
-            productDtos = productQueryRepository.selectPopularProducts(
-                    pageRequest, filterFieldsIds);
-        }
-        if (topBarId == 3) {
-            productDtos = productQueryRepository.selectDiscountProducts(
-                    pageRequest, filterFieldsIds);
+    private Map<Integer, List<Integer>> createFilterFieldsMap(List<Integer> filterFieldsIds) {
+        List<SearchFilterField> searchFilterFields = null;
+        if (filterFieldsIds == null) {
+            searchFilterFields = searchFilterFieldRepository.findAll();
+        } else {
+            searchFilterFields = searchFilterFieldRepository.findAllById(filterFieldsIds);
         }
 
-//        for (ProductListDto productDto : productDtos) {
-//            // 여러개 이미지 중 하나로 세팅
-//            productDto.convertImageUrlsToFirstUrl();
-//            productDto.setReviewCount(reviewQueryService.countReviewWithoutDeleted(productDto.getId(), false));
-//        }
+        Map<Integer, List<Integer>> filterAndFieldMapper = new HashMap<>();
 
-        return productDtos;
+        for (SearchFilterField filterField : searchFilterFields) {
+            int searchFilterId = filterField.getSearchFilterId();
+            List<Integer> existingValue = filterAndFieldMapper.getOrDefault(searchFilterId, new ArrayList<>());
+            existingValue.add(filterField.getId());
+            filterAndFieldMapper.put(
+                    searchFilterId,
+                    existingValue
+            );
+        }
+
+        return filterAndFieldMapper;
     }
 
-    public Integer countTopBarProduct(Integer topBarId,
+    public Long countTopBarProduct(Integer topBarId,
                                       List<Integer> filterFieldsIds,
                                       List<Integer> categoryIds) {
-        if (topBarId == 1) {
-            return productQueryRepository.countNewerProducts(categoryIds, filterFieldsIds);
-        }
-        if (topBarId == 2) {
-            return productQueryRepository.countPopularProducts(categoryIds, filterFieldsIds);
-        }
-        if (topBarId == 3) {
-            return productQueryRepository.countDiscountProducts(categoryIds, filterFieldsIds);
-        }
 
+        Map<Integer, List<Integer>> filterFieldsMap = createFilterFieldsMap(filterFieldsIds);
+        Category category = categoryIds == null
+                ? null
+                : categoryQueryService.findById(categoryIds.get(0));
 
-        throw new BusinessException("탑바를 찾을 수 없습니다.");
+        return productFilterSortRedisResolver.getFilteredProductCnt(category, filterFieldsMap);
     }
 
     public List<ProductPhotoReviewDto> getProductPictures(Integer productId) {
@@ -307,5 +331,41 @@ public class ProductQueryService {
 
     public List<Product> findByIds(List<Integer> productIds) {
         return productRepository.findAllById(productIds);
+    }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByCreatedAtDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByCreatedAtDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByCreatedAtDesc() {
+        return productRepository.findIdsByOrderByCreatedAtDesc();
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByCreatedAtDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByCreatedAtDesc(categoryIds);
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByReviewCntDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByReviewCntDesc(categoryIds);
+    }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByReviewCntDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByReviewCntDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByReviewCntDesc() {
+        return productRepository.findIdsByOrderByReviewCntDesc();
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByDiscountRateDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByDiscountRateDesc(categoryIds);
+    }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByDiscountRateDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByDiscountRateDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByDiscountRateDesc() {
+        return productRepository.findIdsByOrderByDiscountRateDesc();
     }
 }

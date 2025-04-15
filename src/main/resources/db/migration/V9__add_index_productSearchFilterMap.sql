@@ -1,0 +1,1 @@
+create index idx_productSearchFilterMap_fieldId_productId on product_search_filter_map (field_id, product_id);

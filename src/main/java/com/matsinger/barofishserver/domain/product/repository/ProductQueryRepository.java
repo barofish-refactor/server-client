@@ -5,9 +5,6 @@ import com.matsinger.barofishserver.domain.product.domain.Product;
 import com.matsinger.barofishserver.domain.product.domain.ProductSortBy;
 import com.matsinger.barofishserver.domain.product.domain.ProductState;
 import com.matsinger.barofishserver.domain.product.dto.ProductListDto;
-import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
-import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterFieldRepository;
-import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -26,7 +23,6 @@ import org.springframework.stereotype.Repository;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +32,8 @@ import static com.matsinger.barofishserver.domain.product.domain.QProduct.produc
 import static com.matsinger.barofishserver.domain.product.optionitem.domain.QOptionItem.optionItem;
 import static com.matsinger.barofishserver.domain.review.domain.QReview.review;
 import static com.matsinger.barofishserver.domain.searchFilter.domain.QProductSearchFilterMap.productSearchFilterMap;
+import static com.matsinger.barofishserver.domain.searchFilter.domain.QSearchFilter.searchFilter;
+import static com.matsinger.barofishserver.domain.searchFilter.domain.QSearchFilterField.searchFilterField;
 import static com.matsinger.barofishserver.domain.store.domain.QStore.store;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreInfo.storeInfo;
 import static com.matsinger.barofishserver.domain.userinfo.domain.QUserInfo.userInfo;
@@ -46,14 +44,10 @@ import static com.matsinger.barofishserver.order.domain.model.QOrderProductInfo.
 public class ProductQueryRepository {
 
     private final JPAQueryFactory queryFactory;
-    private final SearchFilterFieldRepository searchFilterFieldRepository;
 
-    public PageImpl<ProductListDto> selectNewerProducts(PageRequest pageRequest, List<Integer> filterFieldsIds) {
-        OrderSpecifier[] orderSpecifiers = createNewerSpecifier();
+    public List<ProductListDto> selectNewerProducts(PageRequest pageRequest, Map<Integer, List<Integer>> filterFieldsMap, int count) {
 
-        Integer count = countNewerProducts(null, filterFieldsIds);
-
-        List<ProductListDto> inquiryData = queryFactory
+        return queryFactory
                 .select(Projections.fields(
                         ProductListDto.class,
                         product.id.as("id"),
@@ -74,28 +68,13 @@ public class ProductQueryRepository {
                 .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
                 .where(product.state.eq(ProductState.ACTIVE),
 //                        isPromotionInProgress(),
-                        isIncludedSearchFilter(filterFieldsIds)
+                        isIncludedSearchFilter(filterFieldsMap)
                 )
                 .groupBy(product.id)
 //                .orderBy(orderSpecifiers)
                 .offset(pageRequest.getOffset())
                 .limit(pageRequest.getPageSize())
                 .fetch();
-
-        return new PageImpl<>(inquiryData, pageRequest, count);
-    }
-
-    public Integer countNewerProducts(List<Integer> categoryIds, List<Integer> filterFieldsIds) {
-        Integer count = (int) queryFactory.select(product.count())
-                .from(product)
-                .where(product.state.eq(ProductState.ACTIVE),
-//                        isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldsIds)
-                )
-                .groupBy(product.id)
-                .stream().count();
-        return count;
     }
 
     private OrderSpecifier[] createNewerSpecifier() {
@@ -107,13 +86,12 @@ public class ProductQueryRepository {
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
     }
 
-    public PageImpl<ProductListDto> selectPopularProducts(PageRequest pageRequest,
-                                                          List<Integer> filterFieldsIds) {
-        int count = countPopularProducts(null, filterFieldsIds);
+    public List<ProductListDto> selectPopularProducts(PageRequest pageRequest,
+                                                          Map<Integer, List<Integer>> filterFieldsIds, int count) {
 
         OrderSpecifier[] orderSpecifiers = createPopularOrderSpecifier();
 
-        List<ProductListDto> inquiryData = queryFactory
+        return queryFactory
                 .select(Projections.fields(
                         ProductListDto.class,
                         product.id.as("id"),
@@ -143,8 +121,6 @@ public class ProductQueryRepository {
                 .offset(pageRequest.getOffset())
                 .limit(pageRequest.getPageSize())
                 .fetch();
-
-        return new PageImpl<>(inquiryData, pageRequest, count);
     }
 
     private OrderSpecifier[] createPopularOrderSpecifier() {
@@ -162,27 +138,12 @@ public class ProductQueryRepository {
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
     }
 
-    public int countPopularProducts(List<Integer> categoryIds, List<Integer> filterFieldsIds) {
-        int count = (int) queryFactory
-                .select(product.count())
-                .from(product)
-                .where(product.state.eq(ProductState.ACTIVE),
-//                        isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldsIds)
-                )
-                .groupBy(product.id)
-                .stream().count();
-        return count;
-    }
-
-    public PageImpl<ProductListDto> selectDiscountProducts(PageRequest pageRequest,
-                                                           List<Integer> filterFieldsIds) {
-        int count = countDiscountProducts(null, filterFieldsIds);
+    public List<ProductListDto> selectDiscountProducts(PageRequest pageRequest,
+                                                           Map<Integer, List<Integer>> filterFieldsIds, int count) {
 
         OrderSpecifier[] orderSpecifiers = createDiscountOrderSpecifier();
 
-        List<ProductListDto> inquiryData = queryFactory
+        return queryFactory
                 .select(Projections.fields(
                         ProductListDto.class,
                         product.id.as("id"),
@@ -210,26 +171,7 @@ public class ProductQueryRepository {
                 .orderBy(orderSpecifiers)
                 .offset(pageRequest.getOffset())
                 .limit(pageRequest.getPageSize())
-                .fetch();
-
-        return new PageImpl<>(inquiryData, pageRequest, count);
-    }
-
-    public int countDiscountProducts(List<Integer> categoryIds, List<Integer> filterFieldsIds) {
-        int count =(int) queryFactory
-                .select(product.count())
-                .from(product)
-                .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .where(product.state.eq(ProductState.ACTIVE),
-//                        isPromotionInProgress(),
-                        isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldsIds),
-                        isDiscountApplied()
-                )
-                .groupBy(product.id)
-                .stream().count();
-        return count;
-    }
+                .fetch();}
 
     private OrderSpecifier[] createDiscountOrderSpecifier() {
         List<OrderSpecifier> orderSpecifiers = new ArrayList<>();
@@ -239,55 +181,6 @@ public class ProductQueryRepository {
                 )
         );
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
-    }
-
-    public PageImpl<ProductListDto> getProducts(PageRequest pageRequest,
-                                                ProductSortBy sortBy,
-                                                List<Integer> categoryIds,
-                                                List<Integer> filterFieldIds,
-                                                Integer curationId,
-                                                String keyword,
-                                                List<Integer> productIds,
-                                                Integer storeId) {
-        Integer count = countProducts(categoryIds, filterFieldIds, curationId, keyword, productIds, storeId);
-
-        OrderSpecifier[] orderSpecifiers = createProductSortSpecifier(sortBy);
-        List<ProductListDto> inquiryData = queryFactory
-                .select(Projections.fields(
-                        ProductListDto.class,
-                        product.id.as("id"),
-                        product.state.as("state"),
-                        product.images.as("image"),
-                        product.title.as("title"),
-                        product.needTaxation.as("isNeedTaxation"),
-                        optionItem.discountPrice.as("discountPrice"),
-                        optionItem.originPrice.as("originPrice"),
-                        storeInfo.storeId.as("storeId"),
-                        storeInfo.name.as("storeName"),
-                        product.minOrderPrice.as("minOrderPrice"),
-                        storeInfo.profileImage.as("storeImage"),
-                        product.deliverFeeType.as("delieverFeeType"),
-                        category.parentCategory.id.as("parentCategoryId")
-                ))
-                .from(product)
-                .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
-                .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
-                .leftJoin(category).on(category.id.eq(product.category.id))
-                .where(product.state.eq(ProductState.ACTIVE),
-                        eqCuration(curationId),
-                        isPromotionInProgress(),
-                        eqStore(storeId),
-                        isProductTitleLikeKeyword(keyword),
-                        isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldIds)
-                )
-                .groupBy(product.id)
-                .orderBy(orderSpecifiers)
-                .offset(pageRequest.getOffset())
-                .limit(pageRequest.getPageSize())
-                .fetch();
-
-        return new PageImpl<>(inquiryData, pageRequest, count);
     }
 
     private BooleanExpression matches(StringPath storeName, String[] keywords) {
@@ -302,33 +195,43 @@ public class ProductQueryRepository {
         return keywordMatchesStoreName;
     }
 
-    private BooleanExpression contains(StringPath title, String[] keywords) {
-        BooleanExpression allMatches = null;
-        for (String keyword : keywords) {
-            if (allMatches == null) {
-                allMatches = title.contains(keyword);
-            } else {
-                allMatches.and(title.contains(keyword));
-            }
-        }
-        return allMatches;
+    public int countDiscountProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {
+        int count =(int) queryFactory
+                .select(product.count())
+                .from(product)
+                .leftJoin(optionItem).on(product.representOptionItemId.eq(optionItem.id))
+                .where(product.state.eq(ProductState.ACTIVE),
+//                        isPromotionInProgress(),
+                        isIncludedCategory(categoryIds),
+                        isIncludedSearchFilter(filterFieldsMap),
+                        isDiscountApplied()
+                )
+                .groupBy(product.id)
+                .stream().count();
+        return count;
     }
 
-    public Integer countProductsAtSearchEngine(List<Integer> categoryIds,
-                                               List<Integer> filterFieldIds,
-                                               Integer curationId,
-                                               String[] keywords,
-                                               Integer storeId) {
-        int count = (int) queryFactory
-                .select(product.id)
+    public Integer countNewerProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {
+        Integer count = (int) queryFactory.select(product.count())
                 .from(product)
-                .leftJoin(storeInfo).on(product.storeId.eq(storeInfo.storeId))
                 .where(product.state.eq(ProductState.ACTIVE),
-                        eqCuration(curationId),
-                        isPromotionInProgress(),
-                        eqStore(storeId),
+//                        isPromotionInProgress(),
                         isIncludedCategory(categoryIds),
-                        isIncludedSearchFilter(filterFieldIds)
+                        isIncludedSearchFilter(filterFieldsMap)
+                )
+                .groupBy(product.id)
+                .stream().count();
+        return count;
+    }
+
+    public int countPopularProducts(List<Integer> categoryIds, Map<Integer, List<Integer>> filterFieldsMap) {
+        int count = (int) queryFactory
+                .select(product.count())
+                .from(product)
+                .where(product.state.eq(ProductState.ACTIVE),
+//                        isPromotionInProgress(),
+                        isIncludedCategory(categoryIds),
+                        isIncludedSearchFilter(filterFieldsMap)
                 )
                 .groupBy(product.id)
                 .stream().count();
@@ -336,7 +239,7 @@ public class ProductQueryRepository {
     }
 
     public Integer countProducts(List<Integer> categoryIds,
-                                 List<Integer> filterFieldIds,
+                                 Map<Integer, List<Integer>> filterFieldIds,
                                  Integer curationId,
                                  String keyword,
                                  List<Integer> productIds,
@@ -422,34 +325,18 @@ public class ProductQueryRepository {
         return optionItem.originPrice.notIn(0);
     }
 
-    private BooleanExpression isIncludedSearchFilter(List<Integer> filterFieldsIds) {
-        if (filterFieldsIds == null || filterFieldsIds.isEmpty()) {
+    private BooleanExpression isIncludedSearchFilter(Map<Integer, List<Integer>> filterFieldsMap) {
+        if (filterFieldsMap == null) {
             return null;
         }
-
-        // searchFilterId - searchFilterFields로 매핑되는 해시맵을 만들어요
-        Map<Integer, List<Integer>> filterAndFieldMapper = new HashMap<>();
-        List<SearchFilterField> searchFilterFields = searchFilterFieldRepository.findAllById(filterFieldsIds);
-
-        for (SearchFilterField filterField : searchFilterFields) {
-            int searchFilterId = filterField.getSearchFilterId();
-            List<Integer> existingValue = filterAndFieldMapper.getOrDefault(searchFilterId, new ArrayList<>());
-            existingValue.add(filterField.getId());
-            filterAndFieldMapper.put(
-                    searchFilterId,
-                    existingValue
-            );
-        }
-
-        // 위에서 만들어진 해시맵으로 필터1(필드) && 필터2(필드) .. 조건을 만들어요
         BooleanExpression booleanExpression = null;
-        for (Integer filterId : filterAndFieldMapper.keySet()) {
+        for (Integer filterId : filterFieldsMap.keySet()) {
 
             BooleanExpression filterCondition = product.id.in(
                     JPAExpressions
                             .select(productSearchFilterMap.productId)
                             .from(productSearchFilterMap)
-                            .where(productSearchFilterMap.fieldId.in(filterAndFieldMapper.get(filterId)))
+                            .where(productSearchFilterMap.fieldId.in(filterFieldsMap.get(filterId)))
             );
 
             if (booleanExpression == null) {
@@ -527,6 +414,29 @@ public class ProductQueryRepository {
                 .leftJoin(store).on(store.id.eq(product.storeId))
                 .where(store.id.eq(storeId)
                         .and(product.state.eq(ProductState.INACTIVE_PARTNER)))
+                .fetch();
+    }
+
+    public List<Integer> findCategoryFieldProduct(int categoryId, Integer field) {
+        return queryFactory
+                .select(productSearchFilterMap.productId)
+                .from(product)
+                .leftJoin(productSearchFilterMap).on(productSearchFilterMap.productId.eq(product.id))
+                .where(
+                        product.category.id.eq(categoryId),
+                        productSearchFilterMap.fieldId.eq(field)
+                )
+                .fetch();
+    }
+
+    public List<Integer> findProductIds(int filterId, Integer fieldId) {
+        return queryFactory.select(product.id)
+                .from(product)
+                .leftJoin(productSearchFilterMap).on(product.id.eq(productSearchFilterMap.productId))
+                .leftJoin(searchFilterField).on(searchFilterField.id.eq(productSearchFilterMap.fieldId))
+                .leftJoin(searchFilter).on(searchFilter.id.eq(searchFilterField.searchFilterId))
+                .where(productSearchFilterMap.fieldId.eq(fieldId)
+                        .and(searchFilter.id.eq(filterId)))
                 .fetch();
     }
 }

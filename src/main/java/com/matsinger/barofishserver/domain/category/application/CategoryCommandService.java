@@ -3,7 +3,7 @@ package com.matsinger.barofishserver.domain.category.application;
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.category.dto.CategoryDto;
 import com.matsinger.barofishserver.domain.category.filter.application.CategoryFilterQueryService;
-import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterRepository;
+import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterMapRepository;
 import com.matsinger.barofishserver.domain.category.repository.CategoryRepository;
 import com.matsinger.barofishserver.domain.compare.filter.application.CompareFilterQueryService;
 import com.matsinger.barofishserver.domain.compare.filter.dto.CompareFilterDto;
@@ -21,7 +21,7 @@ import java.util.List;
 public class CategoryCommandService {
     private final CategoryRepository categoryRepository;
     private final CategoryFilterQueryService categoryFilterQueryService;
-    private final CategoryFilterRepository categoryFilterRepository;
+    private final CategoryFilterMapRepository categoryFilterRepository;
     private final CompareFilterQueryService compareFilterQueryService;
 
     public Category add(Category category) {

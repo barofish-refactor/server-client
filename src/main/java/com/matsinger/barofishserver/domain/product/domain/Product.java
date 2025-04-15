@@ -148,6 +148,9 @@ public class Product implements ConditionalObject {
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private ProductSummary productSummary;
 
+    @Column(name = "review_cnt")
+    private int reviewCnt;
+
     public void setPointRate(Float pointRate) {
         this.pointRate = pointRate / 100;
     }

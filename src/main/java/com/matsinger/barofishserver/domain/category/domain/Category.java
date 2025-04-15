@@ -18,7 +18,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "id", nullable = false)
-    private int id;
+    private Integer id;
 
     @Column(name = "parent_category_id", nullable = true)
     private Integer categoryId;
@@ -65,5 +65,9 @@ public class Category {
         }
         return CategoryDto.builder().id(this.id).parentId(this.categoryId).name(this.name).image(this.image).ParentCategoryName(
                 parentName).categories(categories).build();
+    }
+
+    public boolean isParent() {
+        return categoryId == null;
     }
 }

@@ -1,6 +1,6 @@
 package com.matsinger.barofishserver.domain.compare.application;
 
-import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterRepository;
+import com.matsinger.barofishserver.domain.category.filter.repository.CategoryFilterMapRepository;
 import com.matsinger.barofishserver.domain.compare.domain.CompareItem;
 import com.matsinger.barofishserver.domain.compare.domain.CompareSet;
 import com.matsinger.barofishserver.domain.compare.domain.SaveProduct;
@@ -38,7 +38,7 @@ public class CompareItemCommandService {
     private final StoreService storeService;
     private final ProductService productService;
     private final ProductFilterService productFilterService;
-    private final CategoryFilterRepository categoryFilterRepository;
+    private final CategoryFilterMapRepository categoryFilterRepository;
     private final CompareFilterQueryService compareFilterQueryService;
 
     public CompareSet addCompareSet(Integer userId, List<Integer> productIds) {

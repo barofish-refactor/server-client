@@ -35,4 +35,8 @@ public class CategoryQueryService {
     public Optional<Category> findOptionalCategoryWithName(String name, Integer parentCategoryId) {
         return categoryRepository.findFirstByNameAndCategoryId(name, parentCategoryId);
     }
+
+    public List<Category> findALLParent() {
+        return categoryRepository.findAllParentCategoriesWithChildren();
+    }
 }

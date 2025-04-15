@@ -35,14 +35,14 @@ public class OrderCreationService {
 
         // 상품 ID와 스토어 ID로 맵 생성
         Map<Integer, Product> productMap = createProductMap(products);
-        Map<Integer, StoreInfo> storeMap = createStoreMap(stores);
+//        Map<Integer, StoreInfo> storeMap = createStoreMap(stores);
 
         // 주문 상품 정보 생성
         List<OrderProductInfo> orderProducts = orderProductCreator.createOrderProducts(request, orderId, productMap);
 
         // 스토어별 주문 상품 그룹화 및 계산
         Map<StoreInfo, StoreOrderProducts> storeOrderProducts = storeOrderCalculator.calculateStoreOrders(
-                orderProducts, storeMap);
+                orderProducts);
 
         // 가격 계산
         OrderPriceCalculator.OrderPriceResult priceResult = orderPriceCalculator.calculate(
