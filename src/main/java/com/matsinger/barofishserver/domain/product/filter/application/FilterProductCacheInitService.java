@@ -2,14 +2,13 @@ package com.matsinger.barofishserver.domain.product.filter.application;
 
 import com.matsinger.barofishserver.domain.category.domain.Category;
 import com.matsinger.barofishserver.domain.category.domain.CategorySearchFilterMap;
-import com.matsinger.barofishserver.domain.category.repository.CategoryRepository;
 import com.matsinger.barofishserver.domain.category.repository.CategorySearchFilterMapRepository;
+import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.filter.domain.CategoryFilterProducts;
+import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.product.filter.utils.FilterConverter;
 import com.matsinger.barofishserver.domain.product.processor.AbstractCategoryProcessor;
-import com.matsinger.barofishserver.domain.product.application.ProductService;
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
-import com.matsinger.barofishserver.domain.product.filter.repository.CategoryFilterProductsRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +66,10 @@ public class FilterProductCacheInitService extends AbstractCategoryProcessor {
                 }
             }
         }
+    }
+
+    @Override
+    protected void processAll() {
     }
 
     private List<Integer> getFieldIdsFromFilter(SearchFilter filter) {

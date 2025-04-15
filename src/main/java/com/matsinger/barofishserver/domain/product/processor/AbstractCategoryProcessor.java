@@ -21,6 +21,7 @@ public abstract class AbstractCategoryProcessor {
                 }
                 processCategory(pCategory);
             }
+            processAll();
         } catch (Exception e) {
             log.error("카테고리 처리 중 오류 발생", e);
             throw e;
@@ -28,4 +29,6 @@ public abstract class AbstractCategoryProcessor {
     }
 
     protected abstract void processCategory(Category category);
+
+    protected abstract void processAll();
 } 

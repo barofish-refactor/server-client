@@ -41,6 +41,10 @@ public class ProductIndexInitService extends AbstractCategoryProcessor {
         }
     }
 
+    @Override
+    protected void processAll() {
+    }
+
     private boolean exists(Integer pCategoryId, Integer cCategoryId) {
         return productRecommendCacheService.existsByCategoryIdAndSubCategoryId(pCategoryId, cCategoryId);
     }
