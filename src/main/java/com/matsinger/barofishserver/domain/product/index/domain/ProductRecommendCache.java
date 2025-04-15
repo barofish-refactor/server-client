@@ -1,5 +1,6 @@
 package com.matsinger.barofishserver.domain.product.index.domain;
 
+import com.matsinger.barofishserver.domain.product.index.infra.RedisProductIdCsvTarget;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductRecommendCache {
+public class ProductRecommendCache implements RedisProductIdCsvTarget {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
