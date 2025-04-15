@@ -432,4 +432,40 @@ public class ProductQueryService {
     public List<Product> findByIds(List<Integer> productIds) {
         return productRepository.findAllById(productIds);
     }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByCreatedAtDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByCreatedAtDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByCreatedAtDesc() {
+        return productRepository.findIdsByOrderByCreatedAtDesc();
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByCreatedAtDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByCreatedAtDesc(categoryIds);
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByReviewCntDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByReviewCntDesc(categoryIds);
+    }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByReviewCntDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByReviewCntDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByReviewCntDesc() {
+        return productRepository.findIdsByOrderByReviewCntDesc();
+    }
+
+    public List<Integer> getProductIdsByCategoryIdsOrderByDiscountRateDesc(List<Integer> categoryIds) {
+        return productRepository.getProductIdsByCategoryIdsOrderByDiscountRateDesc(categoryIds);
+    }
+
+    public List<Integer> findProductIdsByCategoryIdOrderByDiscountRateDesc(Integer categoryId) {
+        return productRepository.findProductIdsByCategoryIdOrderByDiscountRateDesc(categoryId);
+    }
+
+    public List<Integer> findIdsByOrderByDiscountRateDesc() {
+        return productRepository.findIdsByOrderByDiscountRateDesc();
+    }
 }

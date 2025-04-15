@@ -930,4 +930,31 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
     List<Integer> findIdsByCategoryIdsInAndFieldId(
             @Param("categoryIds") List<Integer> categoryIds,
             @Param("fieldId") Integer fieldId);
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id = :category_id ORDER BY p.createdAt DESC")
+    List<Integer> findProductIdsByCategoryIdOrderByCreatedAtDesc(@Param("category_id") Integer categoryId);
+
+    @Query("SELECT p.id FROM Product p ORDER BY p.createdAt DESC")
+    List<Integer> findIdsByOrderByCreatedAtDesc();
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id IN (:category_ids) ORDER BY p.createdAt DESC")
+    List<Integer> getProductIdsByCategoryIdsOrderByCreatedAtDesc(@Param("category_ids") List<Integer> categoryIds);
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id IN (:category_ids) ORDER BY p.reviewCnt DESC")
+    List<Integer> getProductIdsByCategoryIdsOrderByReviewCntDesc(@Param("category_ids") List<Integer> categoryIds);
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id = :category_id ORDER BY p.reviewCnt DESC")
+    List<Integer> findProductIdsByCategoryIdOrderByReviewCntDesc(@Param("category_id") Integer categoryId);
+
+    @Query("SELECT p.id FROM Product p ORDER BY p.reviewCnt DESC")
+    List<Integer> findIdsByOrderByReviewCntDesc();
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id IN (:category_ids) ORDER BY p.discountRate DESC")
+    List<Integer> getProductIdsByCategoryIdsOrderByDiscountRateDesc(@Param("category_ids") List<Integer> categoryIds);
+
+    @Query("SELECT p.id FROM Product p WHERE p.category.id = :category_id ORDER BY p.discountRate DESC")
+    List<Integer> findProductIdsByCategoryIdOrderByDiscountRateDesc(@Param("category_id") Integer categoryId);
+
+    @Query("SELECT p.id FROM Product p ORDER BY p.discountRate DESC")
+    List<Integer> findIdsByOrderByDiscountRateDesc();
 }
