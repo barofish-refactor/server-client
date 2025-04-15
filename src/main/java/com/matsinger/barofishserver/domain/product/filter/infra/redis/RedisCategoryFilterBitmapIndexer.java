@@ -32,8 +32,16 @@ public class RedisCategoryFilterBitmapIndexer {
                 StringRedisConnection stringConn = (StringRedisConnection) connection;
 
                 for (CategoryFilterProducts filterProduct : filterProducts) {
-                    String categoryId = filterProduct.getCategoryId().toString();
-                    String subCategoryId = filterProduct.getSubCategoryId() != null ? filterProduct.getSubCategoryId().toString() : "null";
+                    String categoryId;
+                    String subCategoryId;
+                    if (filterProduct.getCategoryId() == null) {
+                        categoryId = filterProduct.getCategoryId().toString();
+                        subCategoryId = filterProduct.getSubCategoryId().toString();
+                    } else {
+                        categoryId = "null";
+                        subCategoryId = "null";
+                    }
+
                     String filterId = filterProduct.getFilterId().toString();
                     String fieldId = filterProduct.getFieldId().toString();
                     List<String> productIds = FilterConverter.splitCsv(filterProduct.getProductIds());

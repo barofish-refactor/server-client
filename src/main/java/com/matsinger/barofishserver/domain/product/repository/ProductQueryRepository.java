@@ -32,6 +32,8 @@ import static com.matsinger.barofishserver.domain.product.domain.QProduct.produc
 import static com.matsinger.barofishserver.domain.product.optionitem.domain.QOptionItem.optionItem;
 import static com.matsinger.barofishserver.domain.review.domain.QReview.review;
 import static com.matsinger.barofishserver.domain.searchFilter.domain.QProductSearchFilterMap.productSearchFilterMap;
+import static com.matsinger.barofishserver.domain.searchFilter.domain.QSearchFilter.searchFilter;
+import static com.matsinger.barofishserver.domain.searchFilter.domain.QSearchFilterField.searchFilterField;
 import static com.matsinger.barofishserver.domain.store.domain.QStore.store;
 import static com.matsinger.barofishserver.domain.store.domain.QStoreInfo.storeInfo;
 import static com.matsinger.barofishserver.domain.userinfo.domain.QUserInfo.userInfo;
@@ -424,6 +426,17 @@ public class ProductQueryRepository {
                         product.category.id.eq(categoryId),
                         productSearchFilterMap.fieldId.eq(field)
                 )
+                .fetch();
+    }
+
+    public List<Integer> findProductIds(int filterId, Integer fieldId) {
+        return queryFactory.select(product.id)
+                .from(product)
+                .leftJoin(productSearchFilterMap).on(product.id.eq(productSearchFilterMap.productId))
+                .leftJoin(searchFilterField).on(searchFilterField.id.eq(productSearchFilterMap.fieldId))
+                .leftJoin(searchFilter).on(searchFilter.id.eq(searchFilterField.searchFilterId))
+                .where(productSearchFilterMap.fieldId.eq(fieldId)
+                        .and(searchFilter.id.eq(filterId)))
                 .fetch();
     }
 }

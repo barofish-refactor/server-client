@@ -11,6 +11,7 @@ import com.matsinger.barofishserver.domain.product.processor.AbstractCategoryPro
 import com.matsinger.barofishserver.domain.product.repository.ProductQueryRepository;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilter;
 import com.matsinger.barofishserver.domain.searchFilter.domain.SearchFilterField;
+import com.matsinger.barofishserver.domain.searchFilter.repository.SearchFilterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 애플리케이션 시작 시 FilterProductCache를 초기화하는 서비스
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +31,7 @@ public class FilterProductCacheInitService extends AbstractCategoryProcessor {
     private final ProductQueryRepository productQueryRepository;
     private final CategoryFilterProductsRepository categoryFilterProductsRepository;
     private final CategorySearchFilterMapRepository categorySearchFilterMapRepository;
+    private final SearchFilterRepository searchFilterRepository;
 
     @Transactional
     @Override
@@ -70,6 +69,21 @@ public class FilterProductCacheInitService extends AbstractCategoryProcessor {
 
     @Override
     protected void processAll() {
+        List<SearchFilter> searchFilters = searchFilterRepository.findAll();
+
+        for (SearchFilter filter : searchFilters) {
+            List<Integer> fieldIds = getFieldIdsFromFilter(filter);
+
+            for (Integer fieldId : fieldIds) {
+                boolean exists = checkIfCombinationExists(null, null, filter.getId(), fieldId);
+                if (exists) {
+                    continue;
+                }
+
+                List<Integer> productIds = productQueryRepository.findProductIds(filter.getId(), fieldId);
+                saveFilterProductCache(null, null, filter, fieldId, productIds);
+            }
+        }
     }
 
     private List<Integer> getFieldIdsFromFilter(SearchFilter filter) {
